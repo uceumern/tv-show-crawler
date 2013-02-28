@@ -90,7 +90,7 @@
         android:layout_marginRight="5dip"
         android:layout_marginTop="1dip"
         android:layout_toRightOf="@+id/icon"
-        android:text="Last Episode:"
+        android:text="Next Episode:"
         android:textColor="#343434"
         android:textSize="10dip" />
 
