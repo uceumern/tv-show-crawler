@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory
+        android:key="pref_key_crawler_settings"
+        android:title="@string/pref_crawler_settings_title" >
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="@string/pref_key_catchup"
+            android:summary="@string/pref_catchup"
+            android:title="@string/pref_catchup" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="@string/pref_key_720p"
+            android:summary="@string/pref_720p"
+            android:title="@string/pref_720p" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="@string/pref_key_x264"
+            android:summary="@string/pref_x264"
+            android:title="@string/pref_x264" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="pref_key_transmission_settings"
+        android:title="@string/pref_transmission_settings_title" >
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="@string/pref_key_enable_transmission"
+            android:summary="@string/pref_enable_transmission"
+            android:title="@string/pref_enable_transmission" />
+
+        <EditTextPreference
+            android:defaultValue="@string/pref_transmission_server_default"
+            android:dependency="pref_key_enable_transmission"
+            android:key="@string/pref_key_transmission_server"
+            android:title="@string/pref_transmission_server" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

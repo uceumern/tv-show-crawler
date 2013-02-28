@@ -1,0 +1,37 @@
+{
+    "shows": [
+        {
+            "active": false,
+            "episode": 18,
+            "season": 1,
+            "excludedKeyWords": [
+                "keyword1",
+                "keyword2",
+                "keyword3"
+            ],
+            "name": "New Girl"
+        },
+		{
+            "active": false,
+            "episode": 12,
+            "season": 2,
+            "excludedKeyWords": [
+                "keyword1",
+                "keyword2",
+                "keyword3"
+            ],
+            "name": "30 Rock"
+        },
+		{
+            "active": false,
+            "episode": 18,
+            "season": 7,
+            "excludedKeyWords": [
+                "keyword1",
+                "keyword2",
+                "keyword3"
+            ],
+            "name": "How I Met Your Mother"
+        }
+    ]
+}
