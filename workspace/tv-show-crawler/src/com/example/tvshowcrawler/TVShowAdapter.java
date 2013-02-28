@@ -45,11 +45,11 @@ public class TVShowAdapter extends ArrayAdapter<TVShow>
 			if (item.getLastEpisode() != null)
 				last_episode_content.setText(item.getLastEpisode().toString());
 			else
-				last_episode_content.setText("null");
+				last_episode_content.setText("-");
 			if (item.getNextEpisode() != null)
 				next_episode_content.setText(item.getNextEpisode().toString());
 			else
-				next_episode_content.setText("null");
+				next_episode_content.setText("-");
 			current.setText(String.format("S%02dE%02d", item.getSeason(), item.getEpisode()));
 		}
 
