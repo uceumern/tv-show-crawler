@@ -64,6 +64,7 @@ public class UpdateShowService extends IntentService
 	private void updateShow(TVShow show, boolean serverOnline)
 	{
 		show.setStatus(EnumTVShowStatus.Working);
+		onShowUpdated(show);
 		show.update();
 		// TODO: send status updates during show.update()
 		onShowUpdated(show);
