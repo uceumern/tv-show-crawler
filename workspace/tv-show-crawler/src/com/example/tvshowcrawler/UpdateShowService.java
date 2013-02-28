@@ -51,6 +51,49 @@ public class UpdateShowService extends IntentService
 		this.tvShows = tvShows;
 	}
 
+	private JSONObject buildRequestObject(String sendMethod, JSONObject arguments) throws JSONException
+	{
+		// Build request for method
+		JSONObject request = new JSONObject();
+		request.put("method", sendMethod);
+		request.put("arguments", arguments);
+		request.put("tag", 0);
+		return request;
+	}
+
+	/**
+	 * Build the URL of the Transmission web UI from the user settings.
+	 * 
+	 * @return The URL of the RPC API
+	 */
+	private String buildWebUIUrl()
+	{
+		return "http://zbox:9091/transmission/rpc";
+//		return (settings.getSsl() ? "https://" : "http://") + settings.getAddress() + ":" + settings.getPort()
+//				+ (settings.getFolder() == null ? "" : settings.getFolder()) + "/transmission/rpc";
+	}
+
+	private void initialize()
+	{
+		// Register http and https sockets
+		SchemeRegistry registry = new SchemeRegistry();
+		registry.register(new Scheme("http", new PlainSocketFactory(), 80));
+//		SocketFactory https_socket = SSLSocketFactory.getSocketFactory();
+//		registry.register(new Scheme("https", https_socket, 443));
+
+		int timeout = 5;
+		String userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0";
+
+		// Standard parameters
+		HttpParams httpparams = new BasicHttpParams();
+		HttpConnectionParams.setConnectionTimeout(httpparams, timeout);
+		HttpConnectionParams.setSoTimeout(httpparams, timeout);
+		HttpProtocolParams.setUserAgent(httpparams, userAgent);
+
+		httpclient = new DefaultHttpClient(new ThreadSafeClientConnManager(httpparams, registry),
+				httpparams);
+	}
+
 	private boolean isTransmissionServerOnline()
 	{
 		boolean ret = false;
@@ -76,6 +119,81 @@ public class UpdateShowService extends IntentService
 			return ret;
 		}
 		return ret;
+	}
+
+	private JSONObject makeRequest(JSONObject data)
+	{
+		try
+		{
+			// Initialize the HTTP client
+			if (httpclient == null)
+			{
+				initialize();
+			}
+			final String sessionHeader = "X-Transmission-Session-Id";
+
+			// Setup request using POST stream with URL and data
+			HttpPost httppost = new HttpPost(buildWebUIUrl());
+			StringEntity se = new StringEntity(data.toString(), "UTF-8");
+			httppost.setEntity(se);
+
+			// Send the stored session token as a header
+			if (sessionToken != null)
+			{
+				httppost.addHeader(sessionHeader, sessionToken);
+			}
+
+			// Execute
+			HttpResponse response = httpclient.execute(httppost);
+
+			// Authentication error?
+			if (response.getStatusLine().getStatusCode() == 401)
+			{
+//				throw new DaemonException(ExceptionType.AuthenticationFailure,
+//						"401 HTTP response (username or password incorrect)");
+				return null;
+			}
+
+			// 409 error because of a session id?
+			if (response.getStatusLine().getStatusCode() == 409)
+			{
+
+				// Retry post, but this time with the new session token that was encapsulated in the 409 response
+				sessionToken = response.getFirstHeader(sessionHeader).getValue();
+				httppost.addHeader(sessionHeader, sessionToken);
+				response = httpclient.execute(httppost);
+			}
+
+			HttpEntity entity = response.getEntity();
+			if (entity != null)
+			{
+				// Read JSON response
+				java.io.InputStream instream = entity.getContent();
+				BufferedInputStream bis = new BufferedInputStream(instream);
+				ByteArrayBuffer baf = new ByteArrayBuffer(50);
+				int current = 0;
+				while ((current = bis.read()) != -1)
+				{
+					baf.append((byte) current);
+				}
+				String result = new String(baf.toByteArray());
+				JSONObject json = new JSONObject(result);
+				instream.close();
+
+				Log.d(TAG, "Success: " + (result.length() > 200 ? result.substring(0, 200) + "... (" +
+						result.length() + " chars)" : result));
+
+				// Return the JSON object
+				return json;
+			}
+
+			Log.e(TAG, "Error: No entity in HTTP response");
+
+		} catch (Exception e)
+		{
+			Log.e(TAG, "Error: " + e.toString());
+		}
+		return null;
 	}
 
 	private void onShowUpdated(TVShow show)
@@ -181,124 +299,6 @@ public class UpdateShowService extends IntentService
 	private static final String TAG = "UpdateShowService";
 
 	private List<TVShow> tvShows;
-
-	private JSONObject buildRequestObject(String sendMethod, JSONObject arguments) throws JSONException
-	{
-		// Build request for method
-		JSONObject request = new JSONObject();
-		request.put("method", sendMethod);
-		request.put("arguments", arguments);
-		request.put("tag", 0);
-		return request;
-	}
-
-	private JSONObject makeRequest(JSONObject data)
-	{
-		try
-		{
-			// Initialize the HTTP client
-			if (httpclient == null)
-			{
-				initialize();
-			}
-			final String sessionHeader = "X-Transmission-Session-Id";
-
-			// Setup request using POST stream with URL and data
-			HttpPost httppost = new HttpPost(buildWebUIUrl());
-			StringEntity se = new StringEntity(data.toString(), "UTF-8");
-			httppost.setEntity(se);
-
-			// Send the stored session token as a header
-			if (sessionToken != null)
-			{
-				httppost.addHeader(sessionHeader, sessionToken);
-			}
-
-			// Execute
-			HttpResponse response = httpclient.execute(httppost);
-
-			// Authentication error?
-			if (response.getStatusLine().getStatusCode() == 401)
-			{
-//				throw new DaemonException(ExceptionType.AuthenticationFailure,
-//						"401 HTTP response (username or password incorrect)");
-				return null;
-			}
-
-			// 409 error because of a session id?
-			if (response.getStatusLine().getStatusCode() == 409)
-			{
-
-				// Retry post, but this time with the new session token that was encapsulated in the 409 response
-				sessionToken = response.getFirstHeader(sessionHeader).getValue();
-				httppost.addHeader(sessionHeader, sessionToken);
-				response = httpclient.execute(httppost);
-			}
-
-			HttpEntity entity = response.getEntity();
-			if (entity != null)
-			{
-				// Read JSON response
-				java.io.InputStream instream = entity.getContent();
-				BufferedInputStream bis = new BufferedInputStream(instream);
-				ByteArrayBuffer baf = new ByteArrayBuffer(50);
-				int current = 0;
-				while ((current = bis.read()) != -1)
-				{
-					baf.append((byte) current);
-				}
-				String result = new String(baf.toByteArray());
-				JSONObject json = new JSONObject(result);
-				instream.close();
-
-				Log.d(TAG, "Success: " + (result.length() > 200 ? result.substring(0, 200) + "... (" +
-						result.length() + " chars)" : result));
-
-				// Return the JSON object
-				return json;
-			}
-
-			Log.e(TAG, "Error: No entity in HTTP response");
-
-		} catch (Exception e)
-		{
-			Log.e(TAG, "Error: " + e.toString());
-		}
-		return null;
-	}
-
-	private void initialize()
-	{
-		// Register http and https sockets
-		SchemeRegistry registry = new SchemeRegistry();
-		registry.register(new Scheme("http", new PlainSocketFactory(), 80));
-//		SocketFactory https_socket = SSLSocketFactory.getSocketFactory();
-//		registry.register(new Scheme("https", https_socket, 443));
-
-		int timeout = 5;
-		String userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0";
-
-		// Standard parameters
-		HttpParams httpparams = new BasicHttpParams();
-		HttpConnectionParams.setConnectionTimeout(httpparams, timeout);
-		HttpConnectionParams.setSoTimeout(httpparams, timeout);
-		HttpProtocolParams.setUserAgent(httpparams, userAgent);
-
-		httpclient = new DefaultHttpClient(new ThreadSafeClientConnManager(httpparams, registry),
-				httpparams);
-	}
-
-	/**
-	 * Build the URL of the Transmission web UI from the user settings.
-	 * 
-	 * @return The URL of the RPC API
-	 */
-	private String buildWebUIUrl()
-	{
-		return "http://zbox:9091/transmission/rpc";
-//		return (settings.getSsl() ? "https://" : "http://") + settings.getAddress() + ":" + settings.getPort()
-//				+ (settings.getFolder() == null ? "" : settings.getFolder()) + "/transmission/rpc";
-	}
 
 	private DefaultHttpClient httpclient;
 	private String sessionToken;
