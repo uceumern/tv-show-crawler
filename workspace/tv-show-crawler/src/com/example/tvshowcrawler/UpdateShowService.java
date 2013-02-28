@@ -24,7 +24,6 @@ import org.json.JSONObject;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.net.Uri;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -120,17 +119,17 @@ public class UpdateShowService extends IntentService
 //				return new DaemonTaskSuccessResult(task);
 
 				// start magnet link
-				Intent i = new Intent(Intent.ACTION_VIEW);
-				i.setData(Uri.parse(magnetLink));
-				i.setType("application/x-bittorrent");
-				try
-				{
-					sendBroadcast(i);
+//				Intent i = new Intent(Intent.ACTION_VIEW);
+//				i.setData(Uri.parse(magnetLink));
+//				i.setType("application/x-bittorrent");
+//				try
+//				{
+//					sendBroadcast(i);
 //					success = true;
-				} catch (Exception e)
-				{
-					Log.e(TAG, e.toString());
-				}
+//				} catch (Exception e)
+//				{
+//					Log.e(TAG, e.toString());
+//				}
 			}
 			if (success)
 			{
@@ -252,8 +251,8 @@ public class UpdateShowService extends IntentService
 				JSONObject json = new JSONObject(result);
 				instream.close();
 
-				// TLog.d(TAG, "Success: " + (result.length() > 200? result.substring(0, 200) + "... (" +
-				// result.length() + " chars)": result));
+				Log.d(TAG, "Success: " + (result.length() > 200 ? result.substring(0, 200) + "... (" +
+						result.length() + " chars)" : result));
 
 				// Return the JSON object
 				return json;
@@ -296,7 +295,7 @@ public class UpdateShowService extends IntentService
 	 */
 	private String buildWebUIUrl()
 	{
-		return "http://localhost:9091/transmission/rpc";
+		return "http://zbox:9091/transmission/rpc";
 //		return (settings.getSsl() ? "https://" : "http://") + settings.getAddress() + ":" + settings.getPort()
 //				+ (settings.getFolder() == null ? "" : settings.getFolder()) + "/transmission/rpc";
 	}
