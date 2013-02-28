@@ -16,14 +16,14 @@
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_marginRight="5dip"
-        android:background="@drawable/image_bg"
         android:padding="3dip" >
 
         <ImageView
-            android:id="@+id/list_image"
+            android:id="@+id/status_icon"
             android:layout_width="50dip"
             android:layout_height="50dip"
-            android:src="@drawable/rihanna" />
+            android:src="@drawable/not_checked"
+            android:background="@null" />
     </LinearLayout>
 
     <!-- Title Of TV Show -->

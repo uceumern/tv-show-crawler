@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 public class TVShowAdapter extends ArrayAdapter<TVShow>
@@ -39,6 +40,7 @@ public class TVShowAdapter extends ArrayAdapter<TVShow>
 			TextView last_episode_content = (TextView) view.findViewById(R.id.last_episode_content);
 			TextView next_episode_content = (TextView) view.findViewById(R.id.next_episode_content);
 			TextView current = (TextView) view.findViewById(R.id.current);
+			ImageView status_icon = (ImageView) view.findViewById(R.id.status_icon);
 
 			title.setText(item.getName());
 			status.setText(item.getShowStatus());
@@ -51,9 +53,33 @@ public class TVShowAdapter extends ArrayAdapter<TVShow>
 			else
 				next_episode_content.setText("-");
 			current.setText(String.format("S%02dE%02d", item.getSeason(), item.getEpisode()));
+
+			// update icon
+			switch (item.getStatus())
+			{
+			case Error:
+				status_icon.setImageResource(R.drawable.error);
+				break;
+			case NewEpisodeAvailable:
+				status_icon.setImageResource(R.drawable.new_episode_available);
+				break;
+			case NotChecked:
+				status_icon.setImageResource(R.drawable.not_checked);
+				break;
+			case TorrentNotFound:
+				status_icon.setImageResource(R.drawable.error);
+				break;
+			case UpToDate:
+				status_icon.setImageResource(R.drawable.uptodate);
+				break;
+			case Working:
+				status_icon.setImageResource(R.drawable.working);
+				break;
+			default:
+				break;
+			}
 		}
 
 		return view;
 	}
-
 }
