@@ -149,6 +149,7 @@ public class TVShowTest extends AndroidTestCase
 		TVShow createFromParcel = TVShow.CREATOR.createFromParcel(parcel);
 
 		assertEquals(showOut, createFromParcel);
+		parcel.recycle();
 	}
 
 	public void testQueryAllSites()
