@@ -32,7 +32,7 @@ public class TVShowEditActivity extends Activity
 			else
 				show.setSeason(1); // default to 1
 			// set episode
-			if (seasonEditText.getText().toString().trim().length() > 0)
+			if (episodeEditText.getText().toString().trim().length() > 0)
 				show.setEpisode(Integer.parseInt(episodeEditText.getText().toString()));
 			else
 				show.setEpisode(0); // default to 0
