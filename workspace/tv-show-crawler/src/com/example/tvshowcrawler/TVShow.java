@@ -494,6 +494,12 @@ public class TVShow implements JSONable, Parcelable
 			checkSeason = nextEpisode.getSeason();
 			checkEpisode = nextEpisode.getEpisode();
 		}
+		else
+		{
+			// nothing to do, update status and exit
+			setStatus(EnumTVShowStatus.UpToDate);
+			return;
+		}
 
 		queryAllSites(checkSeason, checkEpisode);
 
