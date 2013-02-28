@@ -64,8 +64,9 @@ public class UpdateShowService extends IntentService
 	private void updateShow(TVShow show, boolean serverOnline)
 	{
 		show.setStatus(EnumTVShowStatus.Working);
-
 		show.update();
+		// TODO: send status updates during show.update()
+		onShowUpdated(show);
 		if (show.getStatus() == EnumTVShowStatus.NewEpisodeAvailable)
 		{
 			boolean success = false;
@@ -104,6 +105,7 @@ public class UpdateShowService extends IntentService
 			{
 				show.setStatus(EnumTVShowStatus.Error);
 			}
+			onShowUpdated(show);
 		}
 	}
 
@@ -124,10 +126,6 @@ public class UpdateShowService extends IntentService
 		for (TVShow show : tvShows)
 		{
 			updateShow(show, serverOnline);
-			Intent localIntent = new Intent(BROADCAST_TVSHOW_UPDATED_ACTION);
-			localIntent.putExtra("tvShow", show);
-			// Broadcasts the Intent to receivers in this app.
-			LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
 		}
 		Intent localIntent = new Intent(BROADCAST_DONE_ACTION);
 		// Broadcasts the Intent to receivers in this app.
@@ -146,4 +144,11 @@ public class UpdateShowService extends IntentService
 
 	private List<TVShow> tvShows;
 
+	private void onShowUpdated(TVShow show)
+	{
+		Intent localIntent = new Intent(BROADCAST_TVSHOW_UPDATED_ACTION);
+		localIntent.putExtra("tvShow", show);
+		// Broadcasts the Intent to receivers in this app.
+		LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+	}
 }
