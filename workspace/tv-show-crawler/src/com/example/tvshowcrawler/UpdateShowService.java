@@ -61,6 +61,14 @@ public class UpdateShowService extends IntentService
 		return ret;
 	}
 
+	private void onShowUpdated(TVShow show)
+	{
+		Intent localIntent = new Intent(BROADCAST_TVSHOW_UPDATED_ACTION);
+		localIntent.putExtra("tvShow", show);
+		// Broadcasts the Intent to receivers in this app.
+		LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+	}
+
 	private void updateShow(TVShow show, boolean serverOnline)
 	{
 		show.setStatus(EnumTVShowStatus.Working);
@@ -79,6 +87,9 @@ public class UpdateShowService extends IntentService
 						String.format("Fetching torrent for '%s S%02dE%02d'...", show.getName(),
 								torrentItem.getSeason(),
 								torrentItem.getEpisode()));
+
+				// TODO: implement transmission remote rpc call
+
 				// start magnet link
 				Intent i = new Intent(Intent.ACTION_VIEW);
 				i.setData(Uri.parse(magnetLink));
@@ -144,12 +155,4 @@ public class UpdateShowService extends IntentService
 	private static final String TAG = "UpdateShowService";
 
 	private List<TVShow> tvShows;
-
-	private void onShowUpdated(TVShow show)
-	{
-		Intent localIntent = new Intent(BROADCAST_TVSHOW_UPDATED_ACTION);
-		localIntent.putExtra("tvShow", show);
-		// Broadcasts the Intent to receivers in this app.
-		LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
-	}
 }
