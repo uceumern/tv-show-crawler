@@ -69,13 +69,14 @@ public class UpdateShowService extends IntentService
 		if (show.getStatus() == EnumTVShowStatus.NewEpisodeAvailable)
 		{
 			boolean success = false;
-			Log.i(TAG,
-					String.format("Fetching torrent for '%s S%02dE%02d'...", show.getName(), show.getSeason(),
-							show.getEpisode()));
 			TorrentItem torrentItem = show.getDownloadItem();
 			String magnetLink = torrentItem.getMagnetLink();
 			if (magnetLink != null && serverOnline)
 			{
+				Log.i(TAG,
+						String.format("Fetching torrent for '%s S%02dE%02d'...", show.getName(),
+								torrentItem.getSeason(),
+								torrentItem.getEpisode()));
 				// start magnet link
 				Intent i = new Intent(Intent.ACTION_VIEW);
 				i.setData(Uri.parse(magnetLink));
