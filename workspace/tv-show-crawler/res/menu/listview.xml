@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/menu_listview" >
+
+    <item
+        android:id="@+id/menu_listview_increase"
+        android:title="@string/increase_episode">
+    </item>
+    <item
+        android:id="@+id/menu_listview_decrease"
+        android:title="@string/decrease_episode"/>
+    <item
+        android:id="@+id/menu_listview_magnet"
+        android:title="@string/copy_magnet_link"/>
+
+</menu>

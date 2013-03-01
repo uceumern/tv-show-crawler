@@ -1,13 +1,17 @@
 package com.example.tvshowcrawler;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -17,10 +21,14 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 
 import com.example.tvshowcrawler.PullToRefreshListView.OnRefreshListener;
@@ -56,7 +64,7 @@ public class MainActivity extends Activity
 			}
 
 			// update view when show changes
-			updateView();
+			updateListView();
 		}
 	}
 
@@ -66,6 +74,47 @@ public class MainActivity extends Activity
 		TVShow show = new TVShow("New Girl", 2, 17);
 		tvShows.add(show);
 		saveTVShows();
+	}
+
+	@Override
+	public boolean onContextItemSelected(MenuItem item)
+	{
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+
+		long row = info.id;
+		Log.d(TAG, "onContextItemSelected: " + row);
+
+		TVShow show = tvShows.get((int) row);
+
+		switch (item.getItemId())
+		{
+		case R.id.menu_listview_increase:
+			show.setEpisode(show.getEpisode() + 1);
+			updateListView();
+			return true;
+		case R.id.menu_listview_decrease:
+			show.setEpisode(Math.max(show.getEpisode() - 1, 0));
+			updateListView();
+			return true;
+		case R.id.menu_listview_magnet:
+			if (show.getDownloadItem() != null && show.getDownloadItem().getMagnetLink() != null)
+			{
+				ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+				ClipData clip = ClipData.newPlainText("magnet link", show.getDownloadItem().getMagnetLink());
+				clipboard.setPrimaryClip(clip);
+			}
+			return true;
+		default:
+			return super.onContextItemSelected(item);
+		}
+	}
+
+	@Override
+	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo)
+	{
+		super.onCreateContextMenu(menu, v, menuInfo);
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.listview, menu);
 	}
 
 	@Override
@@ -154,7 +203,7 @@ public class MainActivity extends Activity
 		});
 	}
 
-	private void updateView()
+	private void updateListView()
 	{
 		// update list
 		runOnUiThread(new Runnable()
@@ -183,14 +232,14 @@ public class MainActivity extends Activity
 					if (!show.equals(editedShow))
 					{
 						tvShows.set(position, editedShow);
-						updateView();
+						updateListView();
 					}
 				}
 				else if (Intent.ACTION_INSERT.equals(data.getAction()))
 				{
 					// add show to list
 					tvShows.add(editedShow);
-					updateView();
+					updateListView();
 				}
 
 				saveTVShows();
@@ -198,6 +247,7 @@ public class MainActivity extends Activity
 		}
 	}
 
+	@SuppressLint("SimpleDateFormat")
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -232,6 +282,9 @@ public class MainActivity extends Activity
 		tvShowAdapter = new TVShowAdapter(this, R.layout.list_row, tvShows);
 		listView = (PullToRefreshListView) findViewById(R.id.listViewTVShows);
 		listView.setAdapter(tvShowAdapter);
+
+		listView.setShowLastUpdatedText(true);
+		listView.setLastUpdatedDateFormat(new SimpleDateFormat("yyyy/MM/dd HH:mm:ss"));
 		// react to item clicks
 		listView.setOnItemClickListener(new OnItemClickListener()
 		{
@@ -259,6 +312,8 @@ public class MainActivity extends Activity
 				MainActivity.this.startService(updateShowServiceIntent);
 			}
 		});
+
+		registerForContextMenu(listView);
 	}
 
 	@Override

@@ -31,5 +31,7 @@
     <string name="ptr_release_to_refresh">Release to refresh</string>
     <string name="ptr_refreshing">Refreshing</string>
     <string name="ptr_last_updated">Updated: %1$s</string>
-
-</resources>
+    <string name="increase_episode">Increase Episode</string>
+    <string name="decrease_episode">Decrease Episode</string>
+    <string name="copy_magnet_link">Copy Magnet Link</string>
+</resources>
