@@ -57,6 +57,45 @@ public class TVShowTest extends AndroidTestCase
 
 	public void testJSONSerialization()
 	{
+		EpisodeInfo outInfo = new EpisodeInfo();
+		outInfo.setSeason(3);
+		outInfo.setEpisode(17);
+		outInfo.setTitle("Episode Title");
+		outInfo.setAirTime(new GregorianCalendar());
+		
+		JSONObject outInfoObject = null;
+		try
+		{
+			outInfoObject = outInfo.toJSONObject();
+		} catch (JSONException e) {
+			fail(e.toString());
+		}
+		String outInfoObjectString = null;
+		try
+		{
+			outInfoObjectString = outInfoObject.toString(4);
+		} catch (JSONException e)
+		{
+			fail(e.toString());
+		}
+		JSONObject inInfoObject = null;
+		try
+		{
+			inInfoObject = new JSONObject(outInfoObjectString);
+		} catch (JSONException e)
+		{
+			fail(e.toString());
+		}
+		EpisodeInfo inInfo = new EpisodeInfo();
+		try
+		{
+			inInfo.fromJSONObject(inInfoObject);
+		} catch (JSONException e)
+		{
+			fail(e.toString());
+		}
+		assertEquals(outInfo, inInfo);
+		
 		String name = "New Girl";
 		int season = 1;
 		int episode = 17;
@@ -67,6 +106,7 @@ public class TVShowTest extends AndroidTestCase
 		excludedKeyWords.add("keyword2");
 		excludedKeyWords.add("keyword3");
 		showOut.setExcludedKeyWords(excludedKeyWords);
+		showOut.setLastEpisode(outInfo);
 
 		JSONObject joOut = null;
 		try

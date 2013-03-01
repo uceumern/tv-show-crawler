@@ -90,6 +90,8 @@ public class TVShow implements JSONable, Parcelable
 		season = src.getInt("season");
 		episode = src.getInt("episode");
 		active = src.getBoolean("active");
+		if (src.has("showStatus"))
+			showStatus = src.getString("showStatus");
 
 		excludedKeyWords = new ArrayList<String>();
 		if (src.has("excludedKeyWords"))
@@ -99,6 +101,17 @@ public class TVShow implements JSONable, Parcelable
 			{
 				excludedKeyWords.add(jsonArray.get(i).toString());
 			}
+		}
+
+		if (src.has("lastEpisode"))
+		{
+			lastEpisode = new EpisodeInfo();
+			lastEpisode.fromJSONObject(src.getJSONObject("lastEpisode"));
+		}
+		if (src.has("nextEpisode"))
+		{
+			nextEpisode = new EpisodeInfo();
+			nextEpisode.fromJSONObject(src.getJSONObject("nextEpisode"));
 		}
 	}
 
@@ -446,11 +459,20 @@ public class TVShow implements JSONable, Parcelable
 		jo.put("season", season);
 		jo.put("episode", episode);
 		jo.put("active", active);
+		if (showStatus != null)
+			jo.put("showStatus", showStatus);
 		if (excludedKeyWords != null)
 		{
 			jo.put("excludedKeyWords", new JSONArray(excludedKeyWords));
 		}
-
+		if (lastEpisode != null)
+		{
+			jo.put("lastEpisode", lastEpisode.toJSONObject());
+		}
+		if (nextEpisode != null)
+		{
+			jo.put("nextEpisode", nextEpisode.toJSONObject());
+		}
 		return jo;
 	}
 
@@ -603,37 +625,6 @@ public class TVShow implements JSONable, Parcelable
 
 	private static final String TAG = "TVShow";
 
-	// open uri and return answer as String (html)
-	public static String readFromUrl(URL url)
-	{
-		String ret = null;
-		try
-		{
-			HttpURLConnection huc = (HttpURLConnection) url.openConnection();
-			HttpURLConnection.setFollowRedirects(true);
-			huc.setConnectTimeout(5 * 1000);
-			huc.setRequestMethod("GET");
-			huc.setRequestProperty("User-Agent",
-					"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0");
-			huc.connect();
-			InputStream is = huc.getInputStream();
-
-			BufferedInputStream bis = new BufferedInputStream(is);
-			ByteArrayBuffer baf = new ByteArrayBuffer(50);
-			int current = 0;
-			while ((current = bis.read()) != -1)
-			{
-				baf.append((byte) current);
-			}
-			ret = new String(baf.toByteArray());
-		} catch (IOException e)
-		{
-			Log.e(TAG, e.toString());
-			ret = null;
-		}
-		return ret;
-	}
-
 	// name of the show e.g. 'New Girl'
 	private String name;
 
@@ -678,4 +669,35 @@ public class TVShow implements JSONable, Parcelable
 			return new TVShow[size];
 		}
 	};
+
+	// open uri and return answer as String (html)
+	public static String readFromUrl(URL url)
+	{
+		String ret = null;
+		try
+		{
+			HttpURLConnection huc = (HttpURLConnection) url.openConnection();
+			HttpURLConnection.setFollowRedirects(true);
+			huc.setConnectTimeout(5 * 1000);
+			huc.setRequestMethod("GET");
+			huc.setRequestProperty("User-Agent",
+					"Mozilla/5.0 (Windows NT 6.1; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0");
+			huc.connect();
+			InputStream is = huc.getInputStream();
+
+			BufferedInputStream bis = new BufferedInputStream(is);
+			ByteArrayBuffer baf = new ByteArrayBuffer(50);
+			int current = 0;
+			while ((current = bis.read()) != -1)
+			{
+				baf.append((byte) current);
+			}
+			ret = new String(baf.toByteArray());
+		} catch (IOException e)
+		{
+			Log.e(TAG, e.toString());
+			ret = null;
+		}
+		return ret;
+	}
 }
