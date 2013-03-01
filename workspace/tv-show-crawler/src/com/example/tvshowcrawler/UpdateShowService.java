@@ -68,18 +68,14 @@ public class UpdateShowService extends IntentService
 	 */
 	private String buildWebUIUrl()
 	{
-		return "http://zbox:9091/transmission/rpc";
-//		return (settings.getSsl() ? "https://" : "http://") + settings.getAddress() + ":" + settings.getPort()
-//				+ (settings.getFolder() == null ? "" : settings.getFolder()) + "/transmission/rpc";
+		return "http://" + Settings.getInstance().getTransmissionServer() + "/transmission/rpc";
 	}
 
 	private void initialize()
 	{
-		// Register http and https sockets
+		// Register http sockets
 		SchemeRegistry registry = new SchemeRegistry();
 		registry.register(new Scheme("http", new PlainSocketFactory(), 80));
-//		SocketFactory https_socket = SSLSocketFactory.getSocketFactory();
-//		registry.register(new Scheme("https", https_socket, 443));
 
 		int timeout = 5;
 		String userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0";
@@ -101,7 +97,7 @@ public class UpdateShowService extends IntentService
 		Log.i(TAG, "Checking Transmission server at: " + Settings.getInstance().getTransmissionServer());
 		try
 		{
-			URL url = new URL(Settings.getInstance().getTransmissionServer());
+			URL url = new URL("http://" + Settings.getInstance().getTransmissionServer());
 			// check if server answers
 			String html = TVShow.readFromUrl(url);
 			if (html == null || html.isEmpty())
@@ -149,8 +145,6 @@ public class UpdateShowService extends IntentService
 			// Authentication error?
 			if (response.getStatusLine().getStatusCode() == 401)
 			{
-//				throw new DaemonException(ExceptionType.AuthenticationFailure,
-//						"401 HTTP response (username or password incorrect)");
 				return null;
 			}
 
@@ -209,7 +203,7 @@ public class UpdateShowService extends IntentService
 		show.setStatus(EnumTVShowStatus.Working);
 		onShowUpdated(show);
 		show.update();
-		// TODO: send status updates during show.update()
+		// TODO: broadcast status updates during show.update()
 		onShowUpdated(show);
 		if (show.getStatus() == EnumTVShowStatus.NewEpisodeAvailable)
 		{
@@ -227,33 +221,22 @@ public class UpdateShowService extends IntentService
 				try
 				{
 					request.put("filename", magnetLink);
-					makeRequest(buildRequestObject("torrent-add", request));
-				} catch (JSONException e1)
+					JSONObject joAnswer = makeRequest(buildRequestObject("torrent-add", request));
+					if (joAnswer != null)
+					{
+						Log.d(TAG, joAnswer.toString(4));
+						success = true;
+					}
+				} catch (JSONException e)
 				{
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+					Log.e(TAG, e.toString());
 				}
-
-//				return new DaemonTaskSuccessResult(task);
-
-				// start magnet link
-//				Intent i = new Intent(Intent.ACTION_VIEW);
-//				i.setData(Uri.parse(magnetLink));
-//				i.setType("application/x-bittorrent");
-//				try
-//				{
-//					sendBroadcast(i);
-//					success = true;
-//				} catch (Exception e)
-//				{
-//					Log.e(TAG, e.toString());
-//				}
 			}
 			if (success)
 			{
 				// return to unchecked state
 				show.setStatus(EnumTVShowStatus.NotChecked);
-				// update show season and episode
+				// update show season and episode to the season and episode of the fetched item
 				show.setSeason(torrentItem.getSeason());
 				show.setEpisode(torrentItem.getEpisode());
 			}
@@ -293,15 +276,10 @@ public class UpdateShowService extends IntentService
 
 	public static final String BROADCAST_DONE_ACTION = "com.example.tvshowcrawler.BROADCAST_DONE_ACTION";
 
-	// Defines the key for the status "extra" in an Intent
-	public static final String EXTENDED_DATA_STATUS = "com.example.tvshowcrawler.STATUS";
-
 	private static final String TAG = "UpdateShowService";
 
 	private List<TVShow> tvShows;
 
 	private DefaultHttpClient httpclient;
 	private String sessionToken;
-
-	private long rpcVersion = -1;
 }
