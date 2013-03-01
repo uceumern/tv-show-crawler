@@ -17,6 +17,7 @@ import android.test.AndroidTestCase;
 import com.example.tvshowcrawler.EpisodeInfo;
 import com.example.tvshowcrawler.JSONUtils;
 import com.example.tvshowcrawler.TVShow;
+import com.example.tvshowcrawler.TVShow.EnumTVShowStatus;
 import com.example.tvshowcrawler.TVShows;
 import com.example.tvshowcrawler.TorrentItem;
 
@@ -107,6 +108,9 @@ public class TVShowTest extends AndroidTestCase
 		excludedKeyWords.add("keyword3");
 		showOut.setExcludedKeyWords(excludedKeyWords);
 		showOut.setLastEpisode(outInfo);
+		showOut.setShowStatus("TestShowStaus");
+		showOut.setMagnetLink("magnet:blah.fasel");
+		showOut.setStatus(EnumTVShowStatus.UpToDate);
 
 		JSONObject joOut = null;
 		try
@@ -170,11 +174,20 @@ public class TVShowTest extends AndroidTestCase
 
 	public void testParcelable()
 	{
+		EpisodeInfo outInfo = new EpisodeInfo();
+		outInfo.setSeason(3);
+		outInfo.setEpisode(17);
+		outInfo.setTitle("Episode Title");
+		outInfo.setAirTime(new GregorianCalendar());
+		
 		String name = "New Girl";
 		int season = 1;
 		int episode = 17;
 
 		TVShow showOut = new TVShow(name, season, episode);
+		showOut.setLastEpisode(outInfo);
+		showOut.setShowStatus("TestShowStaus");
+		showOut.setMagnetLink("magnet:blah.fasel");
 		ArrayList<String> excludedKeyWords = new ArrayList<String>();
 		excludedKeyWords.add("keyword1");
 		excludedKeyWords.add("keyword2");

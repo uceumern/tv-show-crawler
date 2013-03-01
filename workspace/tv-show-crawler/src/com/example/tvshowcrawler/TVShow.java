@@ -27,12 +27,37 @@ public class TVShow implements JSONable, Parcelable
 {
 	public enum EnumTVShowStatus
 	{
-		NotChecked,
-		UpToDate,
-		NewEpisodeAvailable,
-		Working,
-		TorrentNotFound, // i.e. there should be a new episode (according to TVRage), but we can't find one
-		Error
+		NotChecked(1),
+		UpToDate(2),
+		NewEpisodeAvailable(3),
+		Working(4),
+		TorrentNotFound(5), // i.e. there should be a new episode (according to TVRage), but we can't find one
+		Error(6);
+
+		private EnumTVShowStatus(int value)
+		{
+			this.value = value;
+		}
+
+		public int getValue()
+		{
+			return value;
+		}
+
+		private int value;
+
+		public static EnumTVShowStatus valueOf(int value)
+		{
+			EnumTVShowStatus[] enums = EnumTVShowStatus.values();
+			for (EnumTVShowStatus valueEnum : enums)
+			{
+				if (valueEnum.getValue() == value)
+				{
+					return valueEnum;
+				}
+			}
+			return NotChecked;
+		}
 	}
 
 	public TVShow()
@@ -54,11 +79,13 @@ public class TVShow implements JSONable, Parcelable
 	private TVShow(Parcel in)
 	{
 		this();
-		name = in.readString();
-		season = in.readInt();
-		episode = in.readInt();
-		active = in.readByte() == 1;
-		in.readStringList(excludedKeyWords);
+		try
+		{
+			fromJSONObject(new JSONObject(in.readString()));
+		} catch (JSONException e)
+		{
+			Log.e(TAG, e.toString());
+		}
 	}
 
 	@Override
@@ -80,7 +107,12 @@ public class TVShow implements JSONable, Parcelable
 		return name.equals(rhs.getName())
 				&& season == rhs.getSeason()
 				&& episode == rhs.getEpisode()
-				&& excludedKeyWords.equals(rhs.getExcludedKeyWords());
+				&& equal(excludedKeyWords, rhs.getExcludedKeyWords())
+				&& equal(magnetLink, rhs.getMagnetLink())
+				&& equal(lastEpisode, rhs.getLastEpisode())
+				&& equal(nextEpisode, rhs.getNextEpisode())
+				&& status.equals(rhs.getStatus())
+				&& equal(showStatus, rhs.getShowStatus());
 	}
 
 	@Override
@@ -90,9 +122,12 @@ public class TVShow implements JSONable, Parcelable
 		season = src.getInt("season");
 		episode = src.getInt("episode");
 		active = src.getBoolean("active");
+		if (src.has("status"))
+			status = EnumTVShowStatus.valueOf(src.getInt("status"));
 		if (src.has("showStatus"))
 			showStatus = src.getString("showStatus");
-
+		if (src.has("magnetLink"))
+			magnetLink = src.getString("magnetLink");
 		excludedKeyWords = new ArrayList<String>();
 		if (src.has("excludedKeyWords"))
 		{
@@ -112,26 +147,6 @@ public class TVShow implements JSONable, Parcelable
 		{
 			nextEpisode = new EpisodeInfo();
 			nextEpisode.fromJSONObject(src.getJSONObject("nextEpisode"));
-		}
-	}
-
-	public String getAction()
-	{
-		switch (status)
-		{
-		case NotChecked:
-		case UpToDate:
-		case Error:
-		case TorrentNotFound: {
-			return "Check";
-		}
-		case NewEpisodeAvailable: {
-			return "Get Episode";
-		}
-		case Working:
-			return "Working...";
-		default:
-			return "unknown";
 		}
 	}
 
@@ -193,6 +208,11 @@ public class TVShow implements JSONable, Parcelable
 		return lastEpisode;
 	}
 
+	public String getMagnetLink()
+	{
+		return magnetLink;
+	}
+
 	public String getName()
 	{
 		return name;
@@ -240,11 +260,16 @@ public class TVShow implements JSONable, Parcelable
 		if (getTorrentItems().size() > 0)
 		{
 			setStatus(EnumTVShowStatus.NewEpisodeAvailable);
+			// update magnet link
+			assert (getDownloadItem() != null);
+			assert (getDownloadItem().getMagnetLink() != null);
+			magnetLink = getDownloadItem().getMagnetLink();
 		}
 		else
 		{
 			Log.i(TAG, "Did not find any torrents.");
 			setStatus(EnumTVShowStatus.TorrentNotFound);
+			magnetLink = null;
 		}
 	}
 
@@ -425,6 +450,11 @@ public class TVShow implements JSONable, Parcelable
 		this.lastEpisode = lastEpisode;
 	}
 
+	public void setMagnetLink(String magnetLink)
+	{
+		this.magnetLink = magnetLink;
+	}
+
 	public void setName(String name)
 	{
 		this.name = name;
@@ -455,12 +485,15 @@ public class TVShow implements JSONable, Parcelable
 	{
 		JSONObject jo = new JSONObject();
 
+		jo.put("status", status.getValue());
 		jo.put("name", name);
 		jo.put("season", season);
 		jo.put("episode", episode);
 		jo.put("active", active);
 		if (showStatus != null)
 			jo.put("showStatus", showStatus);
+		if (magnetLink != null)
+			jo.put("magnetLink", magnetLink);
 		if (excludedKeyWords != null)
 		{
 			jo.put("excludedKeyWords", new JSONArray(excludedKeyWords));
@@ -602,11 +635,14 @@ public class TVShow implements JSONable, Parcelable
 	@Override
 	public void writeToParcel(Parcel dest, int flags)
 	{
-		dest.writeString(name);
-		dest.writeInt(season);
-		dest.writeInt(episode);
-		dest.writeByte((byte) (active ? 0 : 1));
-		dest.writeStringList(excludedKeyWords);
+		try
+		{
+			dest.writeString(toJSONObject().toString());
+		} catch (JSONException e)
+		{
+			// TODO Auto-generated catch block
+			Log.e(TAG, e.toString());
+		}
 	}
 
 	// / check if name contains keywords marked for exclusion
@@ -656,6 +692,9 @@ public class TVShow implements JSONable, Parcelable
 	// holds keywords that should not occur in valid torrent items
 	private ArrayList<String> excludedKeyWords;
 
+	// holds magnet link to current download item (if any)
+	private String magnetLink;
+
 	// this is used to regenerate your object. All Parcelables must have a CREATOR that implements these two methods
 	public static final Parcelable.Creator<TVShow> CREATOR = new Parcelable.Creator<TVShow>()
 	{
@@ -669,6 +708,20 @@ public class TVShow implements JSONable, Parcelable
 			return new TVShow[size];
 		}
 	};
+
+	// this should be part of Java...
+	public static boolean equal(Object object1, Object object2)
+	{
+		if (object1 == object2)
+		{
+			return true;
+		}
+		if ((object1 == null) || (object2 == null))
+		{
+			return false;
+		}
+		return object1.equals(object2);
+	}
 
 	// open uri and return answer as String (html)
 	public static String readFromUrl(URL url)
