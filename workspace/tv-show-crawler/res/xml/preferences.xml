@@ -32,7 +32,9 @@
         <EditTextPreference
             android:defaultValue="@string/pref_transmission_server_default"
             android:dependency="pref_key_enable_transmission"
+            android:hint="host:port"
             android:key="@string/pref_key_transmission_server"
+            android:summary="Enter host:port of your transmission remote daemon, without http://"
             android:title="@string/pref_transmission_server" />
     </PreferenceCategory>
 
