@@ -198,6 +198,49 @@ public class UpdateShowService extends IntentService
 		LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
 	}
 
+	private boolean startDownload(String magnetLink)
+	{
+		JSONObject request = new JSONObject();
+		try
+		{
+			request.put("filename", magnetLink);
+			JSONObject joAnswer = makeRequest(buildRequestObject("torrent-add", request));
+			if (joAnswer != null)
+			{
+				Log.d(TAG, joAnswer.toString(4));
+				return true;
+			}
+		} catch (JSONException e)
+		{
+			Log.e(TAG, e.toString());
+		}
+		return false;
+	}
+
+	private void startShowAction(TVShow show, boolean serverOnline)
+	{
+		switch (show.getStatus())
+		{
+		case Error:
+		case NotChecked:
+		case TorrentNotFound:
+		case UpToDate:
+			// recheck
+			updateShow(show, serverOnline);
+			break;
+		case NewEpisodeAvailable:
+			// start download
+			assert (show.getMagnetLink() != null);
+			boolean success = startDownload(show.getMagnetLink());
+			Log.d(TAG, "startDownload success: " + success);
+			break;
+		case Working:
+			// do nothing
+		default:
+			break;
+		}
+	}
+
 	private void updateShow(TVShow show, boolean serverOnline)
 	{
 		show.setStatus(EnumTVShowStatus.Working);
@@ -216,33 +259,20 @@ public class UpdateShowService extends IntentService
 						String.format("Fetching torrent for '%s S%02dE%02d'...", show.getName(),
 								torrentItem.getSeason(),
 								torrentItem.getEpisode()));
+				success = startDownload(magnetLink);
 
-				JSONObject request = new JSONObject();
-				try
+				if (success)
 				{
-					request.put("filename", magnetLink);
-					JSONObject joAnswer = makeRequest(buildRequestObject("torrent-add", request));
-					if (joAnswer != null)
-					{
-						Log.d(TAG, joAnswer.toString(4));
-						success = true;
-					}
-				} catch (JSONException e)
-				{
-					Log.e(TAG, e.toString());
+					// return to unchecked state
+					show.setStatus(EnumTVShowStatus.NotChecked);
+					// update show season and episode to the season and episode of the fetched item
+					show.setSeason(torrentItem.getSeason());
+					show.setEpisode(torrentItem.getEpisode());
 				}
-			}
-			if (success)
-			{
-				// return to unchecked state
-				show.setStatus(EnumTVShowStatus.NotChecked);
-				// update show season and episode to the season and episode of the fetched item
-				show.setSeason(torrentItem.getSeason());
-				show.setEpisode(torrentItem.getEpisode());
-			}
-			else
-			{
-				show.setStatus(EnumTVShowStatus.Error);
+				else
+				{
+					show.setStatus(EnumTVShowStatus.Error);
+				}
 			}
 			onShowUpdated(show);
 		}
@@ -251,9 +281,6 @@ public class UpdateShowService extends IntentService
 	@Override
 	protected void onHandleIntent(Intent intent)
 	{
-		// get tvShows from intent
-		tvShows = intent.getParcelableArrayListExtra("com.example.tvshowcrawler.tvShows");
-
 		boolean serverOnline = true;
 		// not sure if no transmission mode makes sense?
 		if (Settings.getInstance().getEnableTransmission())
@@ -261,19 +288,40 @@ public class UpdateShowService extends IntentService
 			serverOnline = isTransmissionServerOnline();
 		}
 
-		// update all shows
-		for (TVShow show : tvShows)
+		if (intent.getAction().equals(BROADCAST_START_SHOW_ACTION))
 		{
-			updateShow(show, serverOnline);
+			// update single show action
+			TVShow show = intent.getExtras().getParcelable("com.example.tvshowcrawler.tvShow");
+			startShowAction(show, serverOnline);
+			onShowUpdated(show);
 		}
-		Intent localIntent = new Intent(BROADCAST_DONE_ACTION);
-		// Broadcasts the Intent to receivers in this app.
-		LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+		else
+		{
+			// update all action
+			// get tvShows from intent
+			tvShows = intent.getParcelableArrayListExtra("com.example.tvshowcrawler.tvShows");
+
+			// not sure if no transmission mode makes sense?
+			if (Settings.getInstance().getEnableTransmission())
+			{
+				serverOnline = isTransmissionServerOnline();
+			}
+
+			// update all shows
+			for (TVShow show : tvShows)
+			{
+				updateShow(show, serverOnline);
+			}
+			Intent localIntent = new Intent(BROADCAST_DONE_ACTION);
+			// Broadcasts the Intent to receivers in this app.
+			LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+		}
 	}
 
 	// Defines a custom Intent action
+	public static final String BROADCAST_START_SHOW_ACTION = "com.example.tvshowcrawler.BROADCAST_START_SHOW_ACTION";
+	public static final String BROADCAST_UPDATE_ALL_SHOWS_ACTION = "com.example.tvshowcrawler.BROADCAST_UPDATE_ALL_SHOWS_ACTION";
 	public static final String BROADCAST_TVSHOW_UPDATED_ACTION = "com.example.tvshowcrawler.BROADCAST_TVSHOW_UPDATED_ACTION";
-
 	public static final String BROADCAST_DONE_ACTION = "com.example.tvshowcrawler.BROADCAST_DONE_ACTION";
 
 	private static final String TAG = "UpdateShowService";

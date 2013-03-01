@@ -68,14 +68,6 @@ public class MainActivity extends Activity
 		}
 	}
 
-	public void onButtonTestStuffClick(View view)
-	{
-		loadTVShows();
-		TVShow show = new TVShow("New Girl", 2, 17);
-		tvShows.add(show);
-		saveTVShows();
-	}
-
 	@Override
 	public boolean onContextItemSelected(MenuItem item)
 	{
@@ -97,7 +89,7 @@ public class MainActivity extends Activity
 			updateListView();
 			return true;
 		case R.id.menu_listview_magnet:
-			if (show.getDownloadItem() != null && show.getDownloadItem().getMagnetLink() != null)
+			if (show.getMagnetLink() != null)
 			{
 				ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
 				ClipData clip = ClipData.newPlainText("magnet link", show.getDownloadItem().getMagnetLink());
@@ -268,6 +260,7 @@ public class MainActivity extends Activity
 		loadTVShows();
 
 		updateShowServiceIntent = new Intent(MainActivity.this, UpdateShowService.class);
+		updateShowServiceIntent.setAction(UpdateShowService.BROADCAST_UPDATE_ALL_SHOWS_ACTION);
 
 		IntentFilter tvShowUpdatedIntentFilter = new IntentFilter(UpdateShowService.BROADCAST_TVSHOW_UPDATED_ACTION);
 		downloadStateReceiver = new DownloadStateReceiver();
