@@ -32,6 +32,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 
 import com.example.tvshowcrawler.PullToRefreshListView.OnRefreshListener;
+import com.example.tvshowcrawler.TVShow.EnumTVShowStatus;
 
 public class MainActivity extends Activity
 {
@@ -82,10 +83,12 @@ public class MainActivity extends Activity
 		{
 		case R.id.menu_listview_increase:
 			show.setEpisode(show.getEpisode() + 1);
+			show.setStatus(EnumTVShowStatus.NotChecked);
 			updateListView();
 			return true;
 		case R.id.menu_listview_decrease:
 			show.setEpisode(Math.max(show.getEpisode() - 1, 0));
+			show.setStatus(EnumTVShowStatus.NotChecked);
 			updateListView();
 			return true;
 		case R.id.menu_listview_magnet:
