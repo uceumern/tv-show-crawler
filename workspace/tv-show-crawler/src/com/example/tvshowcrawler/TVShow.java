@@ -268,7 +268,7 @@ public class TVShow implements JSONable, Parcelable
 		else
 		{
 			Log.i(TAG, "Did not find any torrents.");
-			setStatus(EnumTVShowStatus.TorrentNotFound);
+			setStatus(EnumTVShowStatus.UpToDate);
 			magnetLink = null;
 		}
 	}

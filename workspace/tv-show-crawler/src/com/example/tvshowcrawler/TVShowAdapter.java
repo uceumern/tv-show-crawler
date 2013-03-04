@@ -86,7 +86,7 @@ public class TVShowAdapter extends ArrayAdapter<TVShow>
 				status_icon.setImageResource(R.drawable.not_checked);
 				break;
 			case TorrentNotFound:
-				status_icon.setImageResource(R.drawable.error);
+				status_icon.setImageResource(R.drawable.not_checked);
 				break;
 			case UpToDate:
 				status_icon.setImageResource(R.drawable.uptodate);
