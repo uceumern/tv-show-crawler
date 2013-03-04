@@ -77,7 +77,7 @@ public class UpdateShowService extends IntentService
 		SchemeRegistry registry = new SchemeRegistry();
 		registry.register(new Scheme("http", new PlainSocketFactory(), 80));
 
-		int timeout = 5;
+		int timeout = 5000;
 		String userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0";
 
 		// Standard parameters
@@ -233,6 +233,19 @@ public class UpdateShowService extends IntentService
 			assert (show.getMagnetLink() != null);
 			boolean success = startDownload(show.getMagnetLink());
 			Log.d(TAG, "startDownload success: " + success);
+			if (success)
+			{
+				// return to unchecked state
+				show.setStatus(EnumTVShowStatus.NotChecked);
+				// update show season and episode to the season and episode of the fetched item
+				show.setSeason(show.getDownloadItem().getSeason());
+				show.setEpisode(show.getDownloadItem().getEpisode());
+			}
+			else
+			{
+				show.setStatus(EnumTVShowStatus.Error);
+			}
+			onShowUpdated(show);
 			break;
 		case Working:
 			// do nothing
