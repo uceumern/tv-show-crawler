@@ -254,9 +254,10 @@ public class TVShow implements JSONable, Parcelable
 		{
 			torrentItems.clear();
 		}
-		queryKickAssTorrents(season, episode);
-		if (getTorrentItems().size() < 5)
-			queryPirateBay(season, episode);
+//		queryKickAssTorrents(season, episode);
+//		if (getTorrentItems().size() < 5)
+
+		queryPirateBay(season, episode);
 		if (getTorrentItems().size() > 0)
 		{
 			setStatus(EnumTVShowStatus.NewEpisodeAvailable);
