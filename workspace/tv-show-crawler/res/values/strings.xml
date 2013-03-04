@@ -34,4 +34,7 @@
     <string name="increase_episode">Increase Episode</string>
     <string name="decrease_episode">Decrease Episode</string>
     <string name="copy_magnet_link">Copy Magnet Link</string>
-</resources>
+    <string name="dialog_message">Press OK to delete the show from the list.</string>
+    <string name="dialog_title">Delete Show</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string></resources>

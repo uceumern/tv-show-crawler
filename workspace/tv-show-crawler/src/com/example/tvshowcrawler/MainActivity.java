@@ -13,6 +13,7 @@ import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
@@ -74,7 +75,7 @@ public class MainActivity extends Activity
 	{
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
 
-		long row = info.id;
+		final long row = info.id;
 		Log.d(TAG, "onContextItemSelected: " + row);
 
 		TVShow show = tvShows.get((int) row);
@@ -98,6 +99,30 @@ public class MainActivity extends Activity
 				ClipData clip = ClipData.newPlainText("magnet link", show.getDownloadItem().getMagnetLink());
 				clipboard.setPrimaryClip(clip);
 			}
+			return true;
+		case R.id.menu_listview_delete:
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setMessage(R.string.dialog_message).setTitle(R.string.dialog_title);
+			// Add the buttons
+			builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener()
+			{
+				public void onClick(DialogInterface dialog, int id)
+				{
+					// User clicked OK button
+					// remove show from list
+					tvShows.remove((int) row);
+					updateListView();
+				}
+			});
+			builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener()
+			{
+				public void onClick(DialogInterface dialog, int id)
+				{
+					// User cancelled the dialog
+				}
+			});
+			AlertDialog dialog = builder.create();
+			dialog.show();
 			return true;
 		default:
 			return super.onContextItemSelected(item);
