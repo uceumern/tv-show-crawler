@@ -255,8 +255,8 @@ public class TVShow implements JSONable, Parcelable
 			torrentItems.clear();
 		}
 		queryPirateBay(season, episode);
-//		if (getTorrentItems().size() < 5)
-//			queryKickAssTorrents(season, episode);
+		if (getTorrentItems().size() < 5)
+			queryKickAssTorrents(season, episode);
 		if (getTorrentItems().size() > 0)
 		{
 			setStatus(EnumTVShowStatus.NewEpisodeAvailable);
@@ -364,6 +364,7 @@ public class TVShow implements JSONable, Parcelable
 		}
 
 		// query pirateBay for torrents, order by seeds
+		// e.g. http://thepiratebay.se/search/Game%20of%20Thrones%20S02E09/0/7/0
 		StringBuilder sb = new StringBuilder();
 		sb.append("http://thepiratebay.se/search/");
 		sb.append(String.format("%s S%02dE%02d/0/7/0", name, season, episode).replace(" ", "%20"));
@@ -417,7 +418,15 @@ public class TVShow implements JSONable, Parcelable
 			int seedEnd = html.indexOf("</td>", seedStart + 1);
 			int seeds = Integer.parseInt(html.substring(seedStart + slSearchString.length(), seedEnd));
 
-			if (seeds > 0 && !nameContainsExcludedKeyWords(itemName))
+			// fake detection: check for VIP image
+			// check for tag <a href="/user/some_user"> before tag </tr>
+			int endOfRow = html.indexOf("</tr>", startIndex);
+			int vipUserIndex = html.indexOf("vip.gif", startIndex);
+			int trustedUserIndex = html.indexOf("trusted.png", startIndex);
+			boolean vipUser = vipUserIndex > 0 && vipUserIndex < endOfRow;
+			boolean trustedUser = trustedUserIndex > 0 && trustedUserIndex < endOfRow;
+
+			if ((vipUser || trustedUser) && seeds > 0 && !nameContainsExcludedKeyWords(itemName))
 			{
 				Log.i(TAG, String.format("Got '%s (%d seeds).", itemName, seeds));
 				torrentItems.add(item);
