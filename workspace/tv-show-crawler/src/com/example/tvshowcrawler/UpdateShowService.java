@@ -276,6 +276,11 @@ public class UpdateShowService extends IntentService
 
 				if (success)
 				{
+					// notify main app that a torrent download has started
+					Intent localIntent = new Intent(BROADCAST_NEW_EPISODE_ACTION);
+					localIntent.putExtra("tvShow", show);
+					LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+
 					// return to unchecked state
 					show.setStatus(EnumTVShowStatus.NotChecked);
 					// update show season and episode to the season and episode of the fetched item
@@ -336,6 +341,7 @@ public class UpdateShowService extends IntentService
 	public static final String BROADCAST_UPDATE_ALL_SHOWS_ACTION = "com.example.tvshowcrawler.BROADCAST_UPDATE_ALL_SHOWS_ACTION";
 	public static final String BROADCAST_TVSHOW_UPDATED_ACTION = "com.example.tvshowcrawler.BROADCAST_TVSHOW_UPDATED_ACTION";
 	public static final String BROADCAST_DONE_ACTION = "com.example.tvshowcrawler.BROADCAST_DONE_ACTION";
+	public static final String BROADCAST_NEW_EPISODE_ACTION = "com.example.tvshowcrawler.BROADCAST_NEW_EPISODE_ACTION";
 
 	private static final String TAG = "UpdateShowService";
 

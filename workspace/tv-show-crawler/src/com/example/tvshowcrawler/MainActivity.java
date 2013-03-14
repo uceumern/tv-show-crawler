@@ -31,6 +31,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.Toast;
 
 import com.example.tvshowcrawler.PullToRefreshListView.OnRefreshListener;
 import com.example.tvshowcrawler.TVShow.EnumTVShowStatus;
@@ -58,11 +59,19 @@ public class MainActivity extends Activity
 					}
 				}
 			}
-
-			if (intent.getAction().equals(UpdateShowService.BROADCAST_DONE_ACTION))
+			else if (intent.getAction().equals(UpdateShowService.BROADCAST_DONE_ACTION))
 			{
 				// notify list view that refresh has finished
 				setListViewRefreshComplete();
+			}
+			else if (intent.getAction().equals(UpdateShowService.BROADCAST_NEW_EPISODE_ACTION))
+			{
+				// display message
+				TVShow show = intent.getExtras().getParcelable("tvShow");
+				Toast.makeText(getApplicationContext(),
+						String.format("%s: New episode download started!", show.getName()),
+						Toast.LENGTH_LONG).show();
+
 			}
 
 			// update view when show changes
