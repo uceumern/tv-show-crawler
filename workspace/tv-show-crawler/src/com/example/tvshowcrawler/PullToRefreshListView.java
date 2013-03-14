@@ -51,7 +51,7 @@ public class PullToRefreshListView extends ListView
 	private static final float BOUNCE_OVERSHOOT_TENSION = 1.4f;
 	private static final int ROTATE_ARROW_ANIMATION_DURATION = 250;
 
-	private static enum State
+	public static enum State
 	{
 		PULL_TO_REFRESH,
 		RELEASE_TO_REFRESH,
@@ -89,6 +89,7 @@ public class PullToRefreshListView extends ListView
 	private boolean hasResetHeader;
 	private long lastUpdated = -1;
 	private State state;
+
 	private LinearLayout headerContainer;
 	private RelativeLayout header;
 	private RotateAnimation flipAnimation;
@@ -427,6 +428,11 @@ public class PullToRefreshListView extends ListView
 		image.clearAnimation();
 		image.setVisibility(View.INVISIBLE);
 		text.setText(refreshingText);
+	}
+
+	public State getState()
+	{
+		return state;
 	}
 
 	private void setState(State state)
