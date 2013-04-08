@@ -2,6 +2,7 @@ package com.example.tvshowcrawler;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -204,6 +205,9 @@ public class MainActivity extends Activity
 			try
 			{
 				tvShows.fromJSONObject(jo);
+				// sort shows alphabetically
+				Collections.sort(tvShows);
+
 			} catch (JSONException e)
 			{
 				Log.e(TAG, e.toString());

@@ -23,7 +23,7 @@ import android.os.Parcelable;
 import android.util.Log;
 
 @SuppressLint("DefaultLocale")
-public class TVShow implements JSONable, Parcelable
+public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 {
 	public enum EnumTVShowStatus
 	{
@@ -113,6 +113,12 @@ public class TVShow implements JSONable, Parcelable
 				&& equal(nextEpisode, rhs.getNextEpisode())
 				&& status.equals(rhs.getStatus())
 				&& equal(showStatus, rhs.getShowStatus());
+	}
+
+	@Override
+	public int compareTo(TVShow another)
+	{
+		return name.compareTo(another.name);
 	}
 
 	@Override
