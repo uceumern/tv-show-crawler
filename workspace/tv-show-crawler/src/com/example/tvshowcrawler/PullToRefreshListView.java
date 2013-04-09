@@ -77,6 +77,8 @@ public class PullToRefreshListView extends ListView
 	private boolean bounceBackHeader;
 	private boolean lockScrollWhileRefreshing;
 	private boolean showLastUpdatedText;
+	private boolean scrolling;
+
 	private String pullToRefreshText;
 	private String releaseToRefreshText;
 	private String refreshingText;
@@ -323,6 +325,7 @@ public class PullToRefreshListView extends ListView
 				previousY = event.getY();
 			else
 				previousY = -1;
+			scrolling = false;
 			break;
 
 		case MotionEvent.ACTION_UP:
@@ -341,6 +344,7 @@ public class PullToRefreshListView extends ListView
 					break;
 				}
 			}
+			scrolling = false;
 			break;
 
 		case MotionEvent.ACTION_MOVE:
@@ -351,6 +355,9 @@ public class PullToRefreshListView extends ListView
 				if (diff > 0)
 					diff /= PULL_RESISTANCE;
 				previousY = y;
+
+				if (!scrolling)
+					scrolling = diff > 5; // once scrolling, it can only be reset by ACTION_UP
 
 				int newHeaderPadding = Math.max(Math.round(headerPadding + diff), -header.getHeight());
 
@@ -608,13 +615,14 @@ public class PullToRefreshListView extends ListView
 		{
 			hasResetHeader = false;
 
-			if (onItemLongClickListener != null && state == State.PULL_TO_REFRESH)
+			if (onItemLongClickListener != null && state == State.PULL_TO_REFRESH && !scrolling)
 			{
 				// Passing up onItemLongClick. Correct position with the number of header views
 				return onItemLongClickListener.onItemLongClick(adapterView, view, position - getHeaderViewsCount(), id);
 			}
 
-			return false;
+			// consume long click while scrolling
+			return scrolling;
 		}
 	}
 }
