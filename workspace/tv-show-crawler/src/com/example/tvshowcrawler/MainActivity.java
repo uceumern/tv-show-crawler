@@ -73,6 +73,15 @@ public class MainActivity extends Activity
 						Toast.LENGTH_LONG).show();
 
 			}
+			else if (intent.getAction().equals(UpdateShowService.BROADCAST_TRANSMISSION_SERVER_OFFLINE_ACTION))
+			{
+				// show message that the transmission server is offline
+				Toast.makeText(
+						getApplicationContext(),
+						String.format("Transmission server at '%s' is offline!", Settings.getInstance()
+								.getTransmissionServer()),
+						Toast.LENGTH_LONG).show();
+			}
 
 			// update view when show changes
 			updateListView();
@@ -303,11 +312,14 @@ public class MainActivity extends Activity
 		// create DownloadStateReceiver, which handles all intents from the UpdateShowService
 		downloadStateReceiver = new DownloadStateReceiver();
 		// register BROADCAST_TVSHOW_UPDATED_ACTION intent
-		IntentFilter tvShowUpdatedIntentFilter = new IntentFilter(UpdateShowService.BROADCAST_TVSHOW_UPDATED_ACTION);
-		LocalBroadcastManager.getInstance(this).registerReceiver(downloadStateReceiver, tvShowUpdatedIntentFilter);
+		LocalBroadcastManager.getInstance(this).registerReceiver(downloadStateReceiver,
+				new IntentFilter(UpdateShowService.BROADCAST_TVSHOW_UPDATED_ACTION));
 		// register BROADCAST_DONE_ACTION intent
-		IntentFilter tvShowUpdateDoneIntentFilter = new IntentFilter(UpdateShowService.BROADCAST_DONE_ACTION);
-		LocalBroadcastManager.getInstance(this).registerReceiver(downloadStateReceiver, tvShowUpdateDoneIntentFilter);
+		LocalBroadcastManager.getInstance(this).registerReceiver(downloadStateReceiver,
+				new IntentFilter(UpdateShowService.BROADCAST_DONE_ACTION));
+		// register BROADCAST_TRANSMISSION_SERVER_OFFLINE_ACTION intent
+		LocalBroadcastManager.getInstance(this).registerReceiver(downloadStateReceiver,
+				new IntentFilter(UpdateShowService.BROADCAST_TRANSMISSION_SERVER_OFFLINE_ACTION));
 
 		// create adapter and bind it to show list
 		tvShowAdapter = new TVShowAdapter(this, R.layout.list_row, tvShows);
