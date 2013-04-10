@@ -18,7 +18,6 @@
     <string name="pref_key_catchup">pref_key_catchup</string>
     <string name="pref_key_720p">pref_key_720p</string>
     <string name="pref_key_x264">pref_key_x264</string>
-    <string name="pref_key_enable_transmission">pref_key_enable_transmission</string>
     <string name="pref_key_transmission_server">pref_key_transmission_server</string>
     <string name="name_">Name:</string>
     <string name="enter_tv_show_name">Enter TV show name</string>

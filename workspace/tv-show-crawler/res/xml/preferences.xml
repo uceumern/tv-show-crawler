@@ -23,15 +23,9 @@
     <PreferenceCategory
         android:key="pref_key_transmission_settings"
         android:title="@string/pref_transmission_settings_title" >
-        <CheckBoxPreference
-            android:defaultValue="true"
-            android:key="@string/pref_key_enable_transmission"
-            android:summary="@string/pref_enable_transmission"
-            android:title="@string/pref_enable_transmission" />
 
         <EditTextPreference
             android:defaultValue="@string/pref_transmission_server_default"
-            android:dependency="pref_key_enable_transmission"
             android:hint="host:port"
             android:key="@string/pref_key_transmission_server"
             android:summary="Enter host:port of your transmission remote daemon, without http://"
