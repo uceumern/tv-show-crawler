@@ -105,6 +105,4 @@ public class TVShowAdapter extends ArrayAdapter<TVShow>
 	private List<TVShow> items;
 
 	private Context context;
-
-	private static final String TAG = "TVShowAdapter";
 }

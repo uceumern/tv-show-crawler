@@ -190,10 +190,17 @@ public class UpdateShowService extends IntentService
 		return null;
 	}
 
-	private void onShowUpdated(TVShow show)
+	private void notifyShowUpdated(TVShow show)
 	{
 		Intent localIntent = new Intent(BROADCAST_TVSHOW_UPDATED_ACTION);
 		localIntent.putExtra("tvShow", show);
+		// Broadcasts the Intent to receivers in this app.
+		LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+	}
+
+	private void notifyTransmissionServerOffline()
+	{
+		Intent localIntent = new Intent(BROADCAST_TRANSMISSION_SERVER_OFFLINE_ACTION);
 		// Broadcasts the Intent to receivers in this app.
 		LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
 	}
@@ -230,7 +237,7 @@ public class UpdateShowService extends IntentService
 			break;
 		case NewEpisodeAvailable:
 			// start download
-			if (show.getMagnetLink() != null)
+			if (serverOnline && show.getMagnetLink() != null)
 			{
 				boolean success = startDownload(show.getMagnetLink());
 				Log.d(TAG, "startDownload success: " + success);
@@ -247,11 +254,7 @@ public class UpdateShowService extends IntentService
 					show.setStatus(EnumTVShowStatus.Error);
 				}
 			}
-			else
-			{
-				show.setStatus(EnumTVShowStatus.Error);
-			}
-			onShowUpdated(show);
+			notifyShowUpdated(show);
 			break;
 		case Working:
 			// do nothing
@@ -263,11 +266,11 @@ public class UpdateShowService extends IntentService
 	private void updateShow(TVShow show, boolean serverOnline)
 	{
 		show.setStatus(EnumTVShowStatus.Working);
-		onShowUpdated(show);
+		notifyShowUpdated(show);
 		show.updateTVRageInfo();
-		onShowUpdated(show);
+		notifyShowUpdated(show);
 		show.update();
-		onShowUpdated(show);
+		notifyShowUpdated(show);
 		if (show.getStatus() == EnumTVShowStatus.NewEpisodeAvailable)
 		{
 			boolean success = false;
@@ -299,7 +302,7 @@ public class UpdateShowService extends IntentService
 					show.setStatus(EnumTVShowStatus.Error);
 				}
 			}
-			onShowUpdated(show);
+			notifyShowUpdated(show);
 		}
 	}
 
@@ -307,30 +310,22 @@ public class UpdateShowService extends IntentService
 	protected void onHandleIntent(Intent intent)
 	{
 		boolean serverOnline = true;
-		// not sure if no transmission mode makes sense?
-		if (Settings.getInstance().getEnableTransmission())
-		{
-			serverOnline = isTransmissionServerOnline();
-		}
+		serverOnline = isTransmissionServerOnline();
+		if (!serverOnline)
+			notifyTransmissionServerOffline();
 
 		if (intent.getAction().equals(BROADCAST_START_SHOW_ACTION))
 		{
 			// update single show action
 			TVShow show = intent.getExtras().getParcelable("com.example.tvshowcrawler.tvShow");
 			startShowAction(show, serverOnline);
-			onShowUpdated(show);
+			notifyShowUpdated(show);
 		}
 		else
 		{
 			// update all action
 			// get tvShows from intent
 			tvShows = intent.getParcelableArrayListExtra("com.example.tvshowcrawler.tvShows");
-
-			// not sure if no transmission mode makes sense?
-			if (Settings.getInstance().getEnableTransmission())
-			{
-				serverOnline = isTransmissionServerOnline();
-			}
 
 			// update all shows
 			for (TVShow show : tvShows)
@@ -349,6 +344,7 @@ public class UpdateShowService extends IntentService
 	public static final String BROADCAST_TVSHOW_UPDATED_ACTION = "com.example.tvshowcrawler.BROADCAST_TVSHOW_UPDATED_ACTION";
 	public static final String BROADCAST_DONE_ACTION = "com.example.tvshowcrawler.BROADCAST_DONE_ACTION";
 	public static final String BROADCAST_NEW_EPISODE_ACTION = "com.example.tvshowcrawler.BROADCAST_NEW_EPISODE_ACTION";
+	public static final String BROADCAST_TRANSMISSION_SERVER_OFFLINE_ACTION = "com.example.tvshowcrawler.BROADCAST_TRANSMISSION_SERVER_OFFLINE_ACTION";
 
 	private static final String TAG = "UpdateShowService";
 
