@@ -3,6 +3,7 @@ package com.example.tvshowcrawler;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -16,6 +17,7 @@ import org.apache.http.util.ByteArrayBuffer;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xmlpull.v1.XmlPullParserException;
 
 import android.annotation.SuppressLint;
 import android.os.Parcel;
@@ -661,6 +663,46 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 				}
 			}
 		}
+	}
+
+	public void getTVRageShowInfoAndEpisodeList()
+	{
+		if (id == null)
+		{
+			return;
+		}
+
+		Log.i(TAG, "Retrieving TVRage show info and episode list...");
+		// http://services.tvrage.com/feeds/full_show_info.php?sid=24493
+		String url = String.format("http://services.tvrage.com/feeds/full_show_info.php?sid=%s", id);
+		String rawText;
+		try
+		{
+			rawText = readFromUrl(new URL(url));
+		} catch (MalformedURLException e)
+		{
+			Log.e(TAG, e.toString());
+			rawText = null;
+		}
+		if (rawText == null)
+		{
+			Log.i(TAG, "Retrieving TVRage show info failed.");
+			return;
+		}
+
+		StringReader srReader = new StringReader(rawText);
+		TVRageXmlParser parser = new TVRageXmlParser();
+		try
+		{
+			TVShow parsedShow = parser.parse(srReader, this);
+		} catch (XmlPullParserException e)
+		{
+			Log.e(TAG, e.toString());
+		} catch (IOException e)
+		{
+			Log.e(TAG, e.toString());
+		}
+
 	}
 
 	@Override
