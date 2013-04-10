@@ -20,7 +20,6 @@ import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
-import android.os.StrictMode;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -83,6 +82,7 @@ public class MainActivity extends Activity
 	@Override
 	public boolean onContextItemSelected(MenuItem item)
 	{
+		// handle context menu choice
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
 
 		final long row = info.id;
@@ -142,12 +142,10 @@ public class MainActivity extends Activity
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo)
 	{
-		if (listView.getState() == PullToRefreshListView.State.PULL_TO_REFRESH)
-		{
-			super.onCreateContextMenu(menu, v, menuInfo);
-			MenuInflater inflater = getMenuInflater();
-			inflater.inflate(R.menu.listview, menu);
-		}
+		// create context menu
+		super.onCreateContextMenu(menu, v, menuInfo);
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.listview, menu);
 	}
 
 	@Override
@@ -161,7 +159,7 @@ public class MainActivity extends Activity
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item)
 	{
-		// Handle item selection
+		// Handle options menu item selection
 		switch (item.getItemId())
 		{
 		case R.id.menu_add:
@@ -220,7 +218,6 @@ public class MainActivity extends Activity
 		// save tvShows to /data/data/com.example.tvshowcrawler/files/tvshows.json
 		try
 		{
-			// TODO do some sanity checks to prevent overwriting user data with junk
 			JSONUtils.saveAppJSONFile(getApplicationContext(), "tvshows.json", tvShows.toJSONObject());
 		} catch (JSONException e)
 		{
@@ -254,6 +251,7 @@ public class MainActivity extends Activity
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data)
 	{
+		// handle edit tv show result
 		if (resultCode == RESULT_OK && requestCode == REQUEST_CODE_EDIT_SHOW)
 		{
 			if (data.hasExtra("tvShow") && data.hasExtra("tvShowIndex"))
@@ -268,17 +266,17 @@ public class MainActivity extends Activity
 					if (!show.equals(editedShow))
 					{
 						tvShows.set(position, editedShow);
-						updateListView();
 					}
 				}
 				else if (Intent.ACTION_INSERT.equals(data.getAction()))
 				{
 					// add show to list
 					tvShows.add(editedShow);
-					updateListView();
 				}
 
+				Collections.sort(tvShows);
 				saveTVShows();
+				updateListView();
 			}
 		}
 	}
@@ -291,11 +289,6 @@ public class MainActivity extends Activity
 		// create views, bind data to lists, etc. This method also provides you with a Bundle containing the activity's
 		// previously frozen state, if there was one.
 
-		// disable strict mode
-		// TODO move time consuming calls to other threads
-		StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-		StrictMode.setThreadPolicy(policy);
-
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		// init Settings singleton
@@ -303,19 +296,20 @@ public class MainActivity extends Activity
 		// load show list from file
 		loadTVShows();
 
+		// create intent for updating tv shows
 		updateShowServiceIntent = new Intent(MainActivity.this, UpdateShowService.class);
 		updateShowServiceIntent.setAction(UpdateShowService.BROADCAST_UPDATE_ALL_SHOWS_ACTION);
 
-		IntentFilter tvShowUpdatedIntentFilter = new IntentFilter(UpdateShowService.BROADCAST_TVSHOW_UPDATED_ACTION);
+		// create DownloadStateReceiver, which handles all intents from the UpdateShowService
 		downloadStateReceiver = new DownloadStateReceiver();
-		// Registers the DownloadStateReceiver and its intent filters
+		// register BROADCAST_TVSHOW_UPDATED_ACTION intent
+		IntentFilter tvShowUpdatedIntentFilter = new IntentFilter(UpdateShowService.BROADCAST_TVSHOW_UPDATED_ACTION);
 		LocalBroadcastManager.getInstance(this).registerReceiver(downloadStateReceiver, tvShowUpdatedIntentFilter);
-
+		// register BROADCAST_DONE_ACTION intent
 		IntentFilter tvShowUpdateDoneIntentFilter = new IntentFilter(UpdateShowService.BROADCAST_DONE_ACTION);
-		// Registers the receiver with the new filter
 		LocalBroadcastManager.getInstance(this).registerReceiver(downloadStateReceiver, tvShowUpdateDoneIntentFilter);
 
-		// bind adapter to show list
+		// create adapter and bind it to show list
 		tvShowAdapter = new TVShowAdapter(this, R.layout.list_row, tvShows);
 		listView = (PullToRefreshListView) findViewById(R.id.listViewTVShows);
 		listView.setAdapter(tvShowAdapter);
@@ -339,6 +333,7 @@ public class MainActivity extends Activity
 			}
 		});
 
+		// handle refresh request from listview
 		listView.setOnRefreshListener(new OnRefreshListener()
 		{
 			@Override
