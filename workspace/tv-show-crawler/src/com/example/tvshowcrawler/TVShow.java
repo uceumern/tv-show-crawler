@@ -537,10 +537,9 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 		{
 			torrentItems.clear();
 		}
-		updateTVRageInfo();
 
-		int checkSeason = season;
-		int checkEpisode = episode;
+		int checkSeason = season; // current (last down loaded) season
+		int checkEpisode = episode; // current (last down loaded) episode
 
 		// get episode + 1
 		if (Settings.getInstance().getCatchUp())
@@ -655,7 +654,6 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 			dest.writeString(toJSONObject().toString());
 		} catch (JSONException e)
 		{
-			// TODO Auto-generated catch block
 			Log.e(TAG, e.toString());
 		}
 	}

@@ -230,16 +230,22 @@ public class UpdateShowService extends IntentService
 			break;
 		case NewEpisodeAvailable:
 			// start download
-			assert (show.getMagnetLink() != null);
-			boolean success = startDownload(show.getMagnetLink());
-			Log.d(TAG, "startDownload success: " + success);
-			if (success)
+			if (show.getMagnetLink() != null)
 			{
-				// return to unchecked state
-				show.setStatus(EnumTVShowStatus.NotChecked);
-				// update show season and episode to the season and episode of the fetched item
-				show.setSeason(show.getDownloadItem().getSeason());
-				show.setEpisode(show.getDownloadItem().getEpisode());
+				boolean success = startDownload(show.getMagnetLink());
+				Log.d(TAG, "startDownload success: " + success);
+				if (success)
+				{
+					// return to unchecked state
+					show.setStatus(EnumTVShowStatus.NotChecked);
+					// update show season and episode to the season and episode of the fetched item
+					show.setSeason(show.getDownloadItem().getSeason());
+					show.setEpisode(show.getDownloadItem().getEpisode());
+				}
+				else
+				{
+					show.setStatus(EnumTVShowStatus.Error);
+				}
 			}
 			else
 			{
@@ -258,8 +264,9 @@ public class UpdateShowService extends IntentService
 	{
 		show.setStatus(EnumTVShowStatus.Working);
 		onShowUpdated(show);
+		show.updateTVRageInfo();
+		onShowUpdated(show);
 		show.update();
-		// TODO: broadcast status updates during show.update()
 		onShowUpdated(show);
 		if (show.getStatus() == EnumTVShowStatus.NewEpisodeAvailable)
 		{
