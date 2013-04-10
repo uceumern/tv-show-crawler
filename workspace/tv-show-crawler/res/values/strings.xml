@@ -36,4 +36,6 @@
     <string name="dialog_message">Press OK to delete the show from the list.</string>
     <string name="dialog_title">Delete Show</string>
     <string name="ok">OK</string>
-    <string name="cancel">Cancel</string></resources>
+    <string name="cancel">Cancel</string>
+    <string name="show_id_">Show ID:</string>
+    <string name="enter_tvrage_show_id_e_g_2930">Enter TVRage show id, e.g.: 2930</string></resources>

@@ -17,6 +17,7 @@ public class TVShowEditActivity extends Activity
 		Intent intent = new Intent();
 
 		EditText nameEditText = (EditText) findViewById(R.id.editTextName);
+		EditText showIDEditText = (EditText) findViewById(R.id.editTextShowID);
 		EditText seasonEditText = (EditText) findViewById(R.id.editTextSeason);
 		EditText episodeEditText = (EditText) findViewById(R.id.editTextEpisode);
 		CheckBox activeBox = (CheckBox) findViewById(R.id.checkBoxActive);
@@ -26,6 +27,9 @@ public class TVShowEditActivity extends Activity
 			// update show from views
 			// set name, removing leading/trailing whitespace
 			show.setName(nameEditText.getText().toString().trim());
+			// set id
+			show.setId(showIDEditText.getText().toString().trim());
+
 			// set season
 			if (seasonEditText.getText().toString().trim().length() > 0)
 				show.setSeason(Integer.parseInt(seasonEditText.getText().toString()));
@@ -72,6 +76,11 @@ public class TVShowEditActivity extends Activity
 			// update views
 			EditText nameEditText = (EditText) findViewById(R.id.editTextName);
 			nameEditText.setText(show.getName());
+			EditText showIDEditText = (EditText) findViewById(R.id.editTextShowID);
+			if (show.getId() != null)
+			{
+				showIDEditText.setText(show.getId());
+			}
 			EditText seasonEditText = (EditText) findViewById(R.id.editTextSeason);
 			seasonEditText.setText(String.valueOf(show.getSeason()));
 			EditText episodeEditText = (EditText) findViewById(R.id.editTextEpisode);

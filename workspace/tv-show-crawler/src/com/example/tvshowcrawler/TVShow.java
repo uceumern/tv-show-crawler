@@ -89,6 +89,12 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 	}
 
 	@Override
+	public int compareTo(TVShow another)
+	{
+		return name.compareTo(another.name);
+	}
+
+	@Override
 	public int describeContents()
 	{
 		return 0;
@@ -112,13 +118,8 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 				&& equal(lastEpisode, rhs.getLastEpisode())
 				&& equal(nextEpisode, rhs.getNextEpisode())
 				&& status.equals(rhs.getStatus())
-				&& equal(showStatus, rhs.getShowStatus());
-	}
-
-	@Override
-	public int compareTo(TVShow another)
-	{
-		return name.compareTo(another.name);
+				&& equal(showStatus, rhs.getShowStatus())
+				&& equal(id, rhs.getId());
 	}
 
 	@Override
@@ -154,6 +155,8 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 			nextEpisode = new EpisodeInfo();
 			nextEpisode.fromJSONObject(src.getJSONObject("nextEpisode"));
 		}
+		if (src.has("id"))
+			id = src.getString("id");
 	}
 
 	public Boolean getActive()
@@ -207,6 +210,11 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 	public ArrayList<String> getExcludedKeyWords()
 	{
 		return excludedKeyWords;
+	}
+
+	public String getId()
+	{
+		return id;
 	}
 
 	public EpisodeInfo getLastEpisode()
@@ -460,6 +468,11 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 		this.excludedKeyWords = excludedKeyWords;
 	}
 
+	public void setId(String id)
+	{
+		this.id = id;
+	}
+
 	public void setLastEpisode(EpisodeInfo lastEpisode)
 	{
 		this.lastEpisode = lastEpisode;
@@ -502,6 +515,10 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 
 		jo.put("status", status.getValue());
 		jo.put("name", name);
+		if (id != null)
+		{
+			jo.put("id", id);
+		}
 		jo.put("season", season);
 		jo.put("episode", episode);
 		jo.put("active", active);
@@ -676,6 +693,9 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 
 	// name of the show e.g. 'New Girl'
 	private String name;
+
+	// TVRage show ID, e.g. 2930
+	private String id;
 
 	// current season number (of last successfully fetched episode)
 	private int season;
