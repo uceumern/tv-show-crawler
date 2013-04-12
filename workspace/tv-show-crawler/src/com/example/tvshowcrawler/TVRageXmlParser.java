@@ -18,9 +18,6 @@ import android.util.Xml;
 
 public class TVRageXmlParser
 {
-	// We don't use namespaces
-	private static final String ns = null;
-
 	public TVShow parse(StringReader srReader, TVShow show) throws XmlPullParserException, IOException
 	{
 		try
@@ -93,33 +90,45 @@ public class TVRageXmlParser
 					skip(parser);
 				}
 			}
+			if (airTimeZone == null)
+			{
+				airTimeZone = "GMT-5";
+			}
 			// update airTimes in episode list
 			for (EpisodeInfo eInfo : show.getEpisodeList())
 			{
+				if (airTime == null || eInfo.getAirTime() == null)
+				{
+					continue;
+				}
 				try
 				{
-					// extract air time (of day)
-					SimpleDateFormat sdfToDate = new SimpleDateFormat("hh:mm", Locale.US);
-					Calendar cal = new GregorianCalendar(TimeZone.getTimeZone(airTimeZone));
-					cal.setTime(sdfToDate.parse(airTime));
-					int hours = cal.get(Calendar.HOUR_OF_DAY);
-					int minutes = cal.get(Calendar.MINUTE);
+					// remove DST from string, not supported by TimeZone
+					if (airTimeZone.contains(" +DST"))
+					{
+						airTimeZone = airTimeZone.replace(" +DST", "");
+					}
+					TimeZone tz = TimeZone.getTimeZone(airTimeZone);
 
-					// set correct time zone, add air time
-					Calendar unfixedAirTime = eInfo.getAirTime();
-					Log.d(TAG, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ", Locale.US).format(unfixedAirTime
-							.getTime()));
-					unfixedAirTime.setTimeZone(TimeZone.getTimeZone(airTimeZone));
-					unfixedAirTime.add(Calendar.HOUR_OF_DAY, hours);
-					unfixedAirTime.add(Calendar.MINUTE, minutes);
-					Log.d(TAG, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ", Locale.US).format(unfixedAirTime
-							.getTime()));
-					// convert to UTC time
-					Calendar localTime = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-					localTime.setTimeInMillis(cal.getTimeInMillis());
-					Log.d(TAG, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ", Locale.US).format(localTime
-							.getTime()));
-					eInfo.setAirTime(localTime);
+					// extract air time (of day)
+					SimpleDateFormat sdfAirTimeFormat = new SimpleDateFormat("hh:mm",
+							Locale.US);
+					sdfAirTimeFormat.setTimeZone(tz);
+					// set air time
+					Calendar calAirTimeTemp = new GregorianCalendar(tz, Locale.US);
+					calAirTimeTemp.setTime(sdfAirTimeFormat.parse(airTime));
+
+					// construct calendar object with correct time zone
+					Calendar calAirTime = new GregorianCalendar(tz, Locale.US);
+					calAirTime.set(Calendar.YEAR, eInfo.getAirTime().get(Calendar.YEAR));
+					calAirTime.set(Calendar.MONTH, eInfo.getAirTime().get(Calendar.MONTH));
+					calAirTime.set(Calendar.DAY_OF_MONTH, eInfo.getAirTime().get(Calendar.DAY_OF_MONTH));
+					calAirTime.set(Calendar.HOUR_OF_DAY, calAirTimeTemp.get(Calendar.HOUR_OF_DAY));
+					calAirTime.set(Calendar.MINUTE, calAirTimeTemp.get(Calendar.MINUTE));
+					calAirTime.set(Calendar.SECOND, 0);
+					calAirTime.set(Calendar.MILLISECOND, 0);
+
+					eInfo.setAirTime(calAirTime);
 				} catch (ParseException e)
 				{
 					Log.e(TAG, e.toString());
@@ -133,6 +142,51 @@ public class TVRageXmlParser
 		{
 			srReader.close();
 		}
+	}
+
+	private EpisodeInfo readEpisode(XmlPullParser parser) throws XmlPullParserException, IOException
+	{
+		EpisodeInfo ret = new EpisodeInfo();
+		parser.require(XmlPullParser.START_TAG, ns, "episode");
+		while (parser.next() != XmlPullParser.END_TAG)
+		{
+			if (parser.getEventType() != XmlPullParser.START_TAG)
+			{
+				continue;
+			}
+			String name = parser.getName();
+			if (name.equals("seasonnum"))
+			{
+				String number = readText(parser);
+				int episode = Integer.parseInt(number);
+				ret.setEpisode(episode);
+			} else if (name.equals("airdate"))
+			{
+				String airdate = readText(parser);
+				GregorianCalendar cal = null;
+				try
+				{
+					// 2013-05-12
+					SimpleDateFormat sdfToDate = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+					cal = new GregorianCalendar();
+					cal.setTime(sdfToDate.parse(airdate));
+				} catch (ParseException e)
+				{
+					Log.e(TAG, e.toString());
+				}
+
+				ret.setAirTime(cal);
+			} else if (name.equals("title"))
+			{
+				String title = readText(parser);
+				ret.setTitle(title);
+			}
+			else
+			{
+				skip(parser);
+			}
+		}
+		return ret;
 	}
 
 	private ArrayList<EpisodeInfo> readEpisodeList(XmlPullParser parser) throws XmlPullParserException, IOException
@@ -187,51 +241,6 @@ public class TVRageXmlParser
 		return ret;
 	}
 
-	private EpisodeInfo readEpisode(XmlPullParser parser) throws XmlPullParserException, IOException
-	{
-		EpisodeInfo ret = new EpisodeInfo();
-		parser.require(XmlPullParser.START_TAG, ns, "episode");
-		while (parser.next() != XmlPullParser.END_TAG)
-		{
-			if (parser.getEventType() != XmlPullParser.START_TAG)
-			{
-				continue;
-			}
-			String name = parser.getName();
-			if (name.equals("seasonnum"))
-			{
-				String number = readText(parser);
-				int episode = Integer.parseInt(number);
-				ret.setEpisode(episode);
-			} else if (name.equals("airdate"))
-			{
-				String airdate = readText(parser);
-				GregorianCalendar cal = null;
-				try
-				{
-					// 2013-05-12
-					SimpleDateFormat sdfToDate = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-					cal = new GregorianCalendar();
-					cal.setTime(sdfToDate.parse(airdate));
-				} catch (ParseException e)
-				{
-					Log.e(TAG, e.toString());
-				}
-
-				ret.setAirTime(cal);
-			} else if (name.equals("title"))
-			{
-				String title = readText(parser);
-				ret.setTitle(title);
-			}
-			else
-			{
-				skip(parser);
-			}
-		}
-		return ret;
-	}
-
 	private String readText(XmlPullParser parser) throws IOException, XmlPullParserException
 	{
 		String result = "";
@@ -263,6 +272,9 @@ public class TVRageXmlParser
 			}
 		}
 	}
+
+	// We don't use namespaces
+	private static final String ns = null;
 
 	private static final String TAG = "TVRageXmlParser";
 }
