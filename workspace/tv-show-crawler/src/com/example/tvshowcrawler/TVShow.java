@@ -615,32 +615,6 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 		queryAllSites(checkSeason, checkEpisode);
 	}
 
-	private void setCurrentAndNextEpisode()
-	{
-		// find next and current episode info in episodeList
-		currentEpisode = null;
-		nextEpisode = null;
-		if (episodeList == null)
-		{
-			return;
-		}
-		Iterator<EpisodeInfo> iterator = episodeList.iterator();
-		while (iterator.hasNext())
-		{
-			EpisodeInfo episodeInfo = iterator.next();
-			if (episodeInfo.getSeason() == season && episodeInfo.getEpisode() == episode)
-			{
-				currentEpisode = episodeInfo;
-				// get following episode
-				if (iterator.hasNext())
-				{
-					nextEpisode = iterator.next();
-				}
-				break;
-			}
-		}
-	}
-
 	public void updateTVRageShowInfoAndEpisodeList(boolean force)
 	{
 		if (id == null)
@@ -716,6 +690,32 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 			}
 		}
 		return false;
+	}
+
+	private void setCurrentAndNextEpisode()
+	{
+		// find next and current episode info in episodeList
+		currentEpisode = null;
+		nextEpisode = null;
+		if (episodeList == null)
+		{
+			return;
+		}
+		Iterator<EpisodeInfo> iterator = episodeList.iterator();
+		while (iterator.hasNext())
+		{
+			EpisodeInfo episodeInfo = iterator.next();
+			if (episodeInfo.getSeason() == season && episodeInfo.getEpisode() == episode)
+			{
+				currentEpisode = episodeInfo;
+				// get following episode
+				if (iterator.hasNext())
+				{
+					nextEpisode = iterator.next();
+				}
+				break;
+			}
+		}
 	}
 
 	private static final String TAG = "TVShow";

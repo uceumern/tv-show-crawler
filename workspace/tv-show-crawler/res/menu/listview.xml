@@ -13,6 +13,9 @@
         android:id="@+id/menu_listview_magnet"
         android:title="@string/copy_magnet_link"/>
     <item
+        android:id="@+id/menu_listview_reset"
+        android:title="@string/reset_episode_info"/>
+        <item
         android:id="@+id/menu_listview_delete"
         android:title="Delete Show..."/>
 

@@ -119,6 +119,11 @@ public class MainActivity extends Activity
 				clipboard.setPrimaryClip(clip);
 			}
 			return true;
+		case R.id.menu_listview_reset:
+			show.setEpisodeList(null);
+			show.setStatus(EnumTVShowStatus.NotChecked);
+			updateListView();
+			return true;
 		case R.id.menu_listview_delete:
 			AlertDialog.Builder builder = new AlertDialog.Builder(this);
 			builder.setMessage(R.string.dialog_message).setTitle(R.string.dialog_title);

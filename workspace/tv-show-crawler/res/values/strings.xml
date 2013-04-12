@@ -36,4 +36,5 @@
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
     <string name="show_id_">Show ID:</string>
-    <string name="enter_tvrage_show_id_e_g_2930">Enter TVRage show id, e.g.: 2930</string></resources>
+    <string name="enter_tvrage_show_id_e_g_2930">Enter TVRage show id, e.g.: 2930</string>
+    <string name="reset_episode_info">Reset Episode Info</string></resources>
