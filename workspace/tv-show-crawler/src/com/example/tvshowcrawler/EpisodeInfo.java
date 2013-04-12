@@ -5,7 +5,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Locale;
-import java.util.TimeZone;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,9 +25,7 @@ public class EpisodeInfo implements JSONable
 		EpisodeInfo rhs = (EpisodeInfo) obj;
 		return title.equals(rhs.getTitle())
 				&& season == rhs.getSeason()
-				&& episode == rhs.getEpisode()/*
-											 * && airTime.getTimeInMillis() == rhs.getAirTime().getTimeInMillis()
-											 */;
+				&& episode == rhs.getEpisode();
 	}
 
 	@Override
@@ -37,8 +34,9 @@ public class EpisodeInfo implements JSONable
 		title = src.getString("title");
 		season = src.getInt("season");
 		episode = src.getInt("episode");
+		airTime = null;
 
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss", Locale.US);
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ", Locale.US);
 		try
 		{
 			airTime = new GregorianCalendar();
@@ -97,7 +95,7 @@ public class EpisodeInfo implements JSONable
 		jo.put("title", title);
 		jo.put("season", season);
 		jo.put("episode", episode);
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss", Locale.US);
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ", Locale.US);
 		jo.put("airTime", sdf.format(airTime.getTime()));
 
 		return jo;
@@ -128,52 +126,4 @@ public class EpisodeInfo implements JSONable
 	private String title;
 
 	private Calendar airTime;
-
-	public static EpisodeInfo fromString(String input)
-	{
-		try
-		{
-			EpisodeInfo ei = new EpisodeInfo();
-			// should be: SeasonxEpisode^Title^AirDate
-			// e.g.: 01x19^Secrets^Apr/03/2012
-			String temp = input;
-			String[] episodeInfo = temp.split("\\^");
-			{
-				String[] splitMe = episodeInfo[0].split("x");
-				ei.setSeason(Integer.parseInt(splitMe[0]));
-				ei.setEpisode(Integer.parseInt(splitMe[1]));
-			}
-			ei.setTitle(episodeInfo[1]);
-			ei.setAirTime(extractUTC(episodeInfo[2]));
-			return ei;
-		} catch (Exception ex)
-		{
-			ex.printStackTrace();
-			return null;
-		}
-	}
-
-	private static Calendar extractUTC(String input)
-	{
-		Calendar cal = null;
-		try
-		{
-			SimpleDateFormat sdfToDate = new SimpleDateFormat("MMM/dd/yyyy", Locale.US);
-			cal = new GregorianCalendar(TimeZone.getTimeZone("ET"));
-			cal.setTime(sdfToDate.parse(input));
-			cal.add(Calendar.HOUR_OF_DAY, 21); // shows usually air around 9pm ET
-
-			// shows need some time to appear on torrent sites... maybe 6-12 hours?
-			cal.add(Calendar.HOUR_OF_DAY, 6);
-
-			// convert to local (UTC) time
-			Calendar localTime = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-			localTime.setTimeInMillis(cal.getTimeInMillis());
-			cal = localTime;
-		} catch (ParseException ex2)
-		{
-			ex2.printStackTrace();
-		}
-		return cal;
-	}
 }

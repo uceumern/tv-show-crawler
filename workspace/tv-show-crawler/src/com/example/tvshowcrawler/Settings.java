@@ -10,12 +10,6 @@ public class Settings
 	{
 	}
 
-	public boolean getCatchUp()
-	{
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-		return prefs.getBoolean(context.getString(R.string.pref_key_catchup), false);
-	}
-
 	public Context getContext()
 	{
 		return context;

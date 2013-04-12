@@ -5,11 +5,6 @@
         android:key="pref_key_crawler_settings"
         android:title="@string/pref_crawler_settings_title" >
         <CheckBoxPreference
-            android:defaultValue="true"
-            android:key="@string/pref_key_catchup"
-            android:summary="@string/pref_catchup"
-            android:title="@string/pref_catchup" />
-        <CheckBoxPreference
             android:defaultValue="false"
             android:key="@string/pref_key_720p"
             android:summary="@string/pref_720p"

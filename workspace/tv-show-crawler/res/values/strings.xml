@@ -6,7 +6,6 @@
     <string name="menu_about">About</string>
     <string name="menu_add">Add...</string>
     <string name="button_update_all">Update All</string>
-    <string name="pref_catchup">Catch up mode</string>
     <string name="button_test_stuff">Test Stuff</string>
     <string name="pref_crawler_settings_title">Crawler Settings</string>
     <string name="pref_720p">Prefer 720p</string>
@@ -15,7 +14,6 @@
     <string name="pref_enable_transmission">Enable Transmission Remote Support</string>
     <string name="pref_transmission_server_default">localhost:9091</string>
     <string name="pref_transmission_server">Remote Transmission Server</string>
-    <string name="pref_key_catchup">pref_key_catchup</string>
     <string name="pref_key_720p">pref_key_720p</string>
     <string name="pref_key_x264">pref_key_x264</string>
     <string name="pref_key_transmission_server">pref_key_transmission_server</string>

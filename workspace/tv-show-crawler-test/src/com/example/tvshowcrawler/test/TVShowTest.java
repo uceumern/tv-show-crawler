@@ -4,9 +4,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.TimeZone;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,27 +31,6 @@ public class TVShowTest extends AndroidTestCase
 	{
 		// test proper setup of tested class here
 		super.testAndroidTestCaseSetupProperly();
-	}
-
-	public void testEpisodeInfoParsing()
-	{
-		EpisodeInfo ei = EpisodeInfo.fromString("01x19^Secrets^Apr/03/2012");
-
-		assertEquals(ei.getTitle(), "Secrets");
-		assertEquals(ei.getSeason(), 1);
-		assertEquals(ei.getEpisode(), 19);
-
-		// test air time parsing and calculation
-		Calendar cal = new GregorianCalendar(2012, 3, 3);
-		cal.setTimeZone(TimeZone.getTimeZone("ET"));
-		cal.add(Calendar.HOUR_OF_DAY, 21);
-		cal.add(Calendar.HOUR_OF_DAY, 6);
-		// convert to local (UTC) time
-		Calendar localTime = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-		localTime.setTimeInMillis(cal.getTimeInMillis());
-		cal = localTime;
-
-		assertEquals(ei.getAirTime(), cal);
 	}
 
 	public void testJSONSerialization()
@@ -275,26 +252,6 @@ public class TVShowTest extends AndroidTestCase
 		}
 	}
 
-	public void testTVRageParsing()
-	{
-		// use "ended" show 30 Rock
-		String name = "30 Rock";
-		int season = 7;
-		int episode = 13;
-
-		TVShow show = new TVShow(name, season, episode);
-
-		show.updateTVRageInfo();
-
-		EpisodeInfo eInfo = show.getLastEpisode();
-		assertNotNull(eInfo);
-		assertEquals(7, eInfo.getSeason());
-		assertEquals(13, eInfo.getEpisode());
-		assertEquals("Last Lunch", eInfo.getTitle());
-
-		assertNull(show.getNextEpisode());
-	}
-
 	@Override
 	protected void setUp() throws Exception
 	{
@@ -307,5 +264,18 @@ public class TVShowTest extends AndroidTestCase
 	{
 		// called after last test
 		super.tearDown();
+	}
+	
+	public void testNewTVRageParsing() {
+		String name = "Game of Thrones";
+		int season = 3;
+		int episode = 2;
+		String id = "24493";
+
+		TVShow show = new TVShow(name, season, episode);
+		show.setId(id);
+		
+		show.updateTVRageShowInfoAndEpisodeList(false);
+		
 	}
 }

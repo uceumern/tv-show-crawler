@@ -267,7 +267,7 @@ public class UpdateShowService extends IntentService
 	{
 		show.setStatus(EnumTVShowStatus.Working);
 		notifyShowUpdated(show);
-		show.updateTVRageInfo();
+		show.updateTVRageShowInfoAndEpisodeList(false);
 		notifyShowUpdated(show);
 		show.update();
 		notifyShowUpdated(show);

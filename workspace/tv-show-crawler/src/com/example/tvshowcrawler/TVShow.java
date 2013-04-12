@@ -9,6 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -117,7 +118,7 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 				&& episode == rhs.getEpisode()
 				&& equal(excludedKeyWords, rhs.getExcludedKeyWords())
 				&& equal(magnetLink, rhs.getMagnetLink())
-				&& equal(lastEpisode, rhs.getLastEpisode())
+				&& equal(currentEpisode, rhs.getLastEpisode())
 				&& equal(nextEpisode, rhs.getNextEpisode())
 				&& status.equals(rhs.getStatus())
 				&& equal(showStatus, rhs.getShowStatus())
@@ -149,8 +150,8 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 
 		if (src.has("lastEpisode"))
 		{
-			lastEpisode = new EpisodeInfo();
-			lastEpisode.fromJSONObject(src.getJSONObject("lastEpisode"));
+			currentEpisode = new EpisodeInfo();
+			currentEpisode.fromJSONObject(src.getJSONObject("lastEpisode"));
 		}
 		if (src.has("nextEpisode"))
 		{
@@ -159,6 +160,18 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 		}
 		if (src.has("id"))
 			id = src.getString("id");
+		if (src.has("episodeList"))
+		{
+			episodeList = new ArrayList<EpisodeInfo>();
+			JSONArray ja = src.getJSONArray("episodeList");
+			for (int i = 0; i < ja.length(); i++)
+			{
+				JSONObject jo = ja.getJSONObject(i);
+				EpisodeInfo episodeInfo = new EpisodeInfo();
+				episodeInfo.fromJSONObject(jo);
+				episodeList.add(episodeInfo);
+			}
+		}
 	}
 
 	public Boolean getActive()
@@ -209,6 +222,11 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 		return episode;
 	}
 
+	public ArrayList<EpisodeInfo> getEpisodeList()
+	{
+		return episodeList;
+	}
+
 	public ArrayList<String> getExcludedKeyWords()
 	{
 		return excludedKeyWords;
@@ -221,7 +239,7 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 
 	public EpisodeInfo getLastEpisode()
 	{
-		return lastEpisode;
+		return currentEpisode;
 	}
 
 	public String getMagnetLink()
@@ -465,6 +483,11 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 		this.episode = episode;
 	}
 
+	public void setEpisodeList(ArrayList<EpisodeInfo> list)
+	{
+		episodeList = list;
+	}
+
 	public void setExcludedKeyWords(ArrayList<String> excludedKeyWords)
 	{
 		this.excludedKeyWords = excludedKeyWords;
@@ -477,7 +500,7 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 
 	public void setLastEpisode(EpisodeInfo lastEpisode)
 	{
-		this.lastEpisode = lastEpisode;
+		this.currentEpisode = lastEpisode;
 	}
 
 	public void setMagnetLink(String magnetLink)
@@ -532,13 +555,22 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 		{
 			jo.put("excludedKeyWords", new JSONArray(excludedKeyWords));
 		}
-		if (lastEpisode != null)
+		if (currentEpisode != null)
 		{
-			jo.put("lastEpisode", lastEpisode.toJSONObject());
+			jo.put("lastEpisode", currentEpisode.toJSONObject());
 		}
 		if (nextEpisode != null)
 		{
 			jo.put("nextEpisode", nextEpisode.toJSONObject());
+		}
+		if (episodeList != null)
+		{
+			JSONArray ja = new JSONArray();
+			for (EpisodeInfo episodeInfo : episodeList)
+			{
+				ja.put(episodeInfo.toJSONObject());
+			}
+			jo.put("episodeList", ja);
 		}
 		return jo;
 	}
@@ -560,22 +592,13 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 		int checkSeason = season; // current (last down loaded) season
 		int checkEpisode = episode; // current (last down loaded) episode
 
-		// get episode + 1
-		if (Settings.getInstance().getCatchUp())
+		// get episode + 1, if id is not set
+		if (id == null)
 		{
 			checkSeason = season;
 			checkEpisode = episode + 1;
 		}
-		else if (lastEpisode != null
-				&& (lastEpisode.getSeason() > season
-				|| (lastEpisode.getSeason() == season && lastEpisode.getEpisode() > episode)))
-		{
-			// get last episode as listed by TVRage
-			checkSeason = lastEpisode.getSeason();
-			checkEpisode = lastEpisode.getEpisode();
-		}
-		// we have last episode, check if next episode is already available
-		else if (nextEpisode != null
+		if (nextEpisode != null
 				&& (nextEpisode.getSeason() > season || nextEpisode.getEpisode() > episode)
 				&& nextEpisode.getAirTime().before(Calendar.getInstance()))
 		{
@@ -590,119 +613,83 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 		}
 
 		queryAllSites(checkSeason, checkEpisode);
-
 	}
 
-	// retrieve show metadata and episode info from TVRage
-	public void updateTVRageInfo()
+	private void setCurrentAndNextEpisode()
 	{
-		Log.i(TAG, "Retrieving TVRage show info...");
-		// http://services.tvrage.com/tools/quickinfo.php?show=30_Rock&exact=1
-		String url = String.format("http://services.tvrage.com/tools/quickinfo.php?show=%s&exact=1",
-				name.replace(" ", "%20"));
-		String rawText;
-		try
+		// find next and current episode info in episodeList
+		currentEpisode = null;
+		nextEpisode = null;
+		if (episodeList == null)
 		{
-			rawText = readFromUrl(new URL(url));
-		} catch (MalformedURLException e)
-		{
-			Log.e(TAG, e.toString());
-			rawText = null;
-		}
-		if (rawText == null)
-		{
-			Log.i(TAG, "Retrieving TVRage show info failed.");
 			return;
 		}
-
-		// <pre>Show ID@28304
-		// Show Name@New Girl
-		// Show URL@http://www.tvrage.com/The_New_Girl
-		// Premiered@2011
-		// Started@Sep/20/2011
-		// Ended@
-		// Latest Episode@01x19^Secrets^Apr/03/2012
-		// Next Episode@01x20^Normal^Apr/10/2012
-		// RFC3339@2012-04-10T21:00:00-4:00
-		// GMT+0 NODST@1334098800
-		// Country@USA
-		// Status@New Series
-		// Classification@Scripted
-		// Genres@Comedy
-		// Network@FOX
-		// Airtime@Tuesday at 09:00 pm
-		// Runtime@30
-
-		String[] lines = rawText.split("\n");
-
-		for (String line : lines)
+		Iterator<EpisodeInfo> iterator = episodeList.iterator();
+		while (iterator.hasNext())
 		{
-			if (line.startsWith("Latest Episode"))
+			EpisodeInfo episodeInfo = iterator.next();
+			if (episodeInfo.getSeason() == season && episodeInfo.getEpisode() == episode)
 			{
-				String temp = line;
-				temp = temp.substring(temp.indexOf("@") + 1);
-				EpisodeInfo ei = EpisodeInfo.fromString(temp);
-				if (ei != null)
-					setLastEpisode(ei);
-			}
-			else if (line.startsWith("Next Episode"))
-			{
-				String temp = line;
-				temp = temp.substring(temp.indexOf("@") + 1);
-				EpisodeInfo ei = EpisodeInfo.fromString(temp);
-				if (ei != null)
-					setNextEpisode(ei);
-			}
-			else if (line.startsWith("Status"))
-			{
-				String temp = line;
-				temp = line.substring(temp.indexOf("@") + 1);
-				if (showStatus != temp)
+				currentEpisode = episodeInfo;
+				// get following episode
+				if (iterator.hasNext())
 				{
-					setShowStatus(temp);
+					nextEpisode = iterator.next();
 				}
+				break;
 			}
 		}
 	}
 
-	public void getTVRageShowInfoAndEpisodeList()
+	public void updateTVRageShowInfoAndEpisodeList(boolean force)
 	{
 		if (id == null)
 		{
+			Log.w(TAG, "Show ID not set. Cannot get episode list from TV Rage.");
 			return;
 		}
 
-		Log.i(TAG, "Retrieving TVRage show info and episode list...");
-		// http://services.tvrage.com/feeds/full_show_info.php?sid=24493
-		String url = String.format("http://services.tvrage.com/feeds/full_show_info.php?sid=%s", id);
-		String rawText;
-		try
+		// updates nextEpisode according to current season and episode
+		setCurrentAndNextEpisode();
+
+		// only update episode list if next episode info is not available
+		if (force || nextEpisode == null || nextEpisode.getAirTime() == null)
 		{
-			rawText = readFromUrl(new URL(url));
-		} catch (MalformedURLException e)
-		{
-			Log.e(TAG, e.toString());
-			rawText = null;
-		}
-		if (rawText == null)
-		{
-			Log.i(TAG, "Retrieving TVRage show info failed.");
-			return;
+			Log.i(TAG, "Retrieving TVRage show info and episode list...");
+			// http://services.tvrage.com/feeds/full_show_info.php?sid=24493
+			String url = String.format("http://services.tvrage.com/feeds/full_show_info.php?sid=%s", id);
+			String rawText;
+			try
+			{
+				rawText = readFromUrl(new URL(url));
+			} catch (MalformedURLException e)
+			{
+				Log.e(TAG, e.toString());
+				rawText = null;
+			}
+			if (rawText == null)
+			{
+				Log.i(TAG, "Retrieving TVRage show info failed.");
+				return;
+			}
+
+			StringReader srReader = new StringReader(rawText);
+			TVRageXmlParser parser = new TVRageXmlParser();
+			try
+			{
+				TVShow parsedShow = parser.parse(srReader, this);
+				// update episode list
+				setEpisodeList(parsedShow.getEpisodeList());
+			} catch (XmlPullParserException e)
+			{
+				Log.e(TAG, e.toString());
+			} catch (IOException e)
+			{
+				Log.e(TAG, e.toString());
+			}
 		}
 
-		StringReader srReader = new StringReader(rawText);
-		TVRageXmlParser parser = new TVRageXmlParser();
-		try
-		{
-			TVShow parsedShow = parser.parse(srReader, this);
-		} catch (XmlPullParserException e)
-		{
-			Log.e(TAG, e.toString());
-		} catch (IOException e)
-		{
-			Log.e(TAG, e.toString());
-		}
-
+		setCurrentAndNextEpisode();
 	}
 
 	@Override
@@ -753,7 +740,7 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 	private EnumTVShowStatus status = EnumTVShowStatus.NotChecked;
 
 	// EpisodeInfo for last broadcasted episode according to TVRage
-	private EpisodeInfo lastEpisode;
+	private EpisodeInfo currentEpisode;
 
 	// EpisodeInfo for next episode to be aired according to TVRage
 	private EpisodeInfo nextEpisode;
@@ -769,6 +756,8 @@ public class TVShow implements JSONable, Parcelable, Comparable<TVShow>
 
 	// holds magnet link to current download item (if any)
 	private String magnetLink;
+
+	private ArrayList<EpisodeInfo> episodeList;
 
 	// this is used to regenerate your object. All Parcelables must have a CREATOR that implements these two methods
 	public static final Parcelable.Creator<TVShow> CREATOR = new Parcelable.Creator<TVShow>()
