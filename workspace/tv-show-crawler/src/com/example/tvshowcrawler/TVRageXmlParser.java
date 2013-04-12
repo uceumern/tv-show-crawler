@@ -144,6 +144,43 @@ public class TVRageXmlParser
 		}
 	}
 
+	public TVShows parseShowList(StringReader srReader) throws XmlPullParserException, IOException
+	{
+		try
+		{
+			XmlPullParser parser = Xml.newPullParser();
+			parser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false);
+			parser.setInput(srReader);
+			parser.nextTag();
+
+			TVShows ret = new TVShows();
+
+			parser.require(XmlPullParser.START_TAG, ns, "Results");
+			while (parser.next() != XmlPullParser.END_TAG)
+			{
+				if (parser.getEventType() != XmlPullParser.START_TAG)
+				{
+					continue;
+				}
+				String tagName = parser.getName();
+				if (tagName.equals("show"))
+				{
+					// show name
+					TVShow show = readShow(parser);
+					ret.add(show);
+				}
+				else
+				{
+					skip(parser);
+				}
+			}
+			return ret;
+		} finally
+		{
+			srReader.close();
+		}
+	}
+
 	private EpisodeInfo readEpisode(XmlPullParser parser) throws XmlPullParserException, IOException
 	{
 		EpisodeInfo ret = new EpisodeInfo();
@@ -238,6 +275,47 @@ public class TVRageXmlParser
 				skip(parser);
 			}
 		}
+		return ret;
+	}
+
+	private TVShow readShow(XmlPullParser parser) throws IOException, XmlPullParserException
+	{
+		TVShow ret = new TVShow();
+
+		String title = null;
+		String started = null;
+		String country = null;
+
+		parser.require(XmlPullParser.START_TAG, ns, "show");
+		while (parser.next() != XmlPullParser.END_TAG)
+		{
+			if (parser.getEventType() != XmlPullParser.START_TAG)
+			{
+				continue;
+			}
+			String tagName = parser.getName();
+			if (tagName.equals("showid"))
+			{
+				String number = readText(parser);
+				ret.setId(number);
+			} else if (tagName.equals("name"))
+			{
+				title = readText(parser);
+			}
+			else if (tagName.equals("started"))
+			{
+				started = readText(parser);
+			}
+			else if (tagName.equals("country"))
+			{
+				country = readText(parser);
+			}
+			else
+			{
+				skip(parser);
+			}
+		}
+		ret.setName(String.format("%s (%s/%s)", title, country, started));
 		return ret;
 	}
 

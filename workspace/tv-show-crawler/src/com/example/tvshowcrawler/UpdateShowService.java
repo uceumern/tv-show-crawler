@@ -1,6 +1,8 @@
 package com.example.tvshowcrawler;
 
 import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -21,6 +23,7 @@ import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.util.ByteArrayBuffer;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -39,16 +42,6 @@ public class UpdateShowService extends IntentService
 	public UpdateShowService(String name)
 	{
 		super(name);
-	}
-
-	public List<TVShow> getTvShows()
-	{
-		return tvShows;
-	}
-
-	public void setTvShows(List<TVShow> tvShows)
-	{
-		this.tvShows = tvShows;
 	}
 
 	private JSONObject buildRequestObject(String sendMethod, JSONObject arguments) throws JSONException
@@ -309,22 +302,26 @@ public class UpdateShowService extends IntentService
 	@Override
 	protected void onHandleIntent(Intent intent)
 	{
-		boolean serverOnline = true;
-		serverOnline = isTransmissionServerOnline();
-		if (!serverOnline)
-			notifyTransmissionServerOffline();
-
 		if (intent.getAction().equals(BROADCAST_START_SHOW_ACTION))
 		{
+			boolean serverOnline = isTransmissionServerOnline();
+			if (!serverOnline)
+				notifyTransmissionServerOffline();
+
 			// update single show action
 			TVShow show = intent.getExtras().getParcelable("com.example.tvshowcrawler.tvShow");
 			startShowAction(show, serverOnline);
 			notifyShowUpdated(show);
 		}
-		else
+		else if (intent.getAction().equals(BROADCAST_UPDATE_ALL_SHOWS_ACTION))
 		{
+			boolean serverOnline = isTransmissionServerOnline();
+			if (!serverOnline)
+				notifyTransmissionServerOffline();
+
 			// update all action
 			// get tvShows from intent
+			assert (intent.hasExtra("com.example.tvshowcrawler.tvShows"));
 			tvShows = intent.getParcelableArrayListExtra("com.example.tvshowcrawler.tvShows");
 
 			// update all shows
@@ -336,6 +333,52 @@ public class UpdateShowService extends IntentService
 			// Broadcasts the Intent to receivers in this app.
 			LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
 		}
+		else if (intent.getAction().equals(BROADCAST_GET_SHOW_LIST))
+		{
+			String showName = intent.getExtras().getString("com.example.tvshowcrawler.tvShowName");
+			Log.i(TAG, "Retrieving TVRage show list...");
+			// http://services.tvrage.com/feeds/search.php?show=some show name
+			String url = String.format("http://services.tvrage.com/feeds/search.php?show=%s",
+					showName.replace(" ", "%20"));
+			String rawText;
+			try
+			{
+				rawText = TVShow.readFromUrl(new URL(url));
+			} catch (MalformedURLException e)
+			{
+				Log.e(TAG, e.toString());
+				rawText = null;
+			}
+			if (rawText == null)
+			{
+				Log.i(TAG, "Retrieving TVRage show info failed.");
+				return;
+			}
+
+			// parse xml
+			StringReader srReader = new StringReader(rawText);
+			TVRageXmlParser parser = new TVRageXmlParser();
+			TVShows showList = null;
+			Intent localIntent = new Intent(BROADCAST_GET_SHOW_LIST_COMPLETE);
+			try
+			{
+				showList = parser.parseShowList(srReader);
+
+				if (showList != null && !showList.isEmpty())
+				{
+					localIntent.putParcelableArrayListExtra("com.example.tvshowcrawler.tvShows", showList);
+				}
+
+			} catch (XmlPullParserException e)
+			{
+				Log.e(TAG, e.toString());
+			} catch (IOException e)
+			{
+				Log.e(TAG, e.toString());
+			}
+
+			LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+		}
 	}
 
 	// Defines a custom Intent action
@@ -345,6 +388,8 @@ public class UpdateShowService extends IntentService
 	public static final String BROADCAST_DONE_ACTION = "com.example.tvshowcrawler.BROADCAST_DONE_ACTION";
 	public static final String BROADCAST_NEW_EPISODE_ACTION = "com.example.tvshowcrawler.BROADCAST_NEW_EPISODE_ACTION";
 	public static final String BROADCAST_TRANSMISSION_SERVER_OFFLINE_ACTION = "com.example.tvshowcrawler.BROADCAST_TRANSMISSION_SERVER_OFFLINE_ACTION";
+	public static final String BROADCAST_GET_SHOW_LIST = "com.example.tvshowcrawler.BROADCAST_GET_SHOW_LIST";
+	public static final String BROADCAST_GET_SHOW_LIST_COMPLETE = "com.example.tvshowcrawler.BROADCAST_GET_SHOW_LIST_COMPLETE";
 
 	private static final String TAG = "UpdateShowService";
 

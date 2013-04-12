@@ -44,8 +44,6 @@ public class MainActivity extends Activity
 		@Override
 		public void onReceive(Context context, Intent intent)
 		{
-			Log.d("DownloadStateReceiver", intent.getAction());
-
 			if (intent.getAction().equals(UpdateShowService.BROADCAST_TVSHOW_UPDATED_ACTION))
 			{
 				TVShow show = intent.getExtras().getParcelable("tvShow");

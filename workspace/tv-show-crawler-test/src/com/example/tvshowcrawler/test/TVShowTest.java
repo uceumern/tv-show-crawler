@@ -1,6 +1,7 @@
 package com.example.tvshowcrawler.test;
 
 import java.io.File;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
@@ -16,9 +17,11 @@ import org.json.JSONObject;
 
 import android.os.Parcel;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import com.example.tvshowcrawler.EpisodeInfo;
 import com.example.tvshowcrawler.JSONUtils;
+import com.example.tvshowcrawler.TVRageXmlParser;
 import com.example.tvshowcrawler.TVShow;
 import com.example.tvshowcrawler.TVShow.EnumTVShowStatus;
 import com.example.tvshowcrawler.TVShows;
@@ -130,18 +133,6 @@ public class TVShowTest extends AndroidTestCase {
 			fail(e.toString());
 		}
 		assertEquals(tvShowsOut, tvShowsIn);
-	}
-
-	public void testNewTVRageParsing() {
-		String name = "Game of Thrones";
-		int season = 3;
-		int episode = 2;
-		String id = "24493";
-
-		TVShow show = new TVShow(name, season, episode);
-		show.setId(id);
-
-		show.updateTVRageShowInfoAndEpisodeList(false);
 	}
 
 	public void testParcelable() {
@@ -298,6 +289,59 @@ public class TVShowTest extends AndroidTestCase {
 		assertEquals(21, hours);
 		assertEquals(0, minutes);
 		assertEquals(-5 * 60 * 60 * 1000, tzOffset); // -5 hours in ms
+	}
+
+	public void testTVRageGetShowList() {
+		String showName = "New Girl";
+		String showId = "28304";
+		String url = String.format(
+				"http://services.tvrage.com/feeds/search.php?show=%s",
+				showName.replace(" ", "%20"));
+		String rawText;
+		try {
+			rawText = TVShow.readFromUrl(new URL(url));
+		} catch (MalformedURLException e) {
+			Log.e("", e.toString());
+			rawText = null;
+		}
+		if (rawText == null) {
+			Log.i("", "Retrieving TVRage show info failed.");
+			return;
+		}
+
+		StringReader srReader = new StringReader(rawText);
+		TVRageXmlParser parser = new TVRageXmlParser();
+		try {
+			TVShows showList = parser.parseShowList(srReader);
+
+			assertNotNull(showList);
+			assertTrue(!showList.isEmpty());
+
+			boolean foundCorrectShow = false;
+			for (TVShow tvShow : showList) {
+				if (tvShow.getName().equals(showName)
+						&& tvShow.getId().equals(showId)) {
+					foundCorrectShow = true;
+					break;
+				}
+			}
+			assertTrue(foundCorrectShow);
+
+		} catch (Exception e) {
+			fail(e.toString());
+		}
+	}
+
+	public void testTVRageParsing() {
+		String name = "Game of Thrones";
+		int season = 3;
+		int episode = 2;
+		String id = "24493";
+
+		TVShow show = new TVShow(name, season, episode);
+		show.setId(id);
+
+		show.updateTVRageShowInfoAndEpisodeList(false);
 	}
 
 	@Override
