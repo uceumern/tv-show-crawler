@@ -121,6 +121,8 @@ public class MainActivity extends Activity
 			return true;
 		case R.id.menu_listview_reset:
 			show.setEpisodeList(null);
+			show.setNextEpisode(null);
+			show.setLastEpisode(null);
 			show.setStatus(EnumTVShowStatus.NotChecked);
 			updateListView();
 			return true;
