@@ -49,14 +49,19 @@ public class TVShowEditActivity extends Activity
 						// select item in list
 						public void onClick(DialogInterface dialog, int item)
 						{
-							Toast.makeText(getApplicationContext(), items[item], Toast.LENGTH_SHORT).show();
-
+							Toast.makeText(TVShowEditActivity.this, items[item], Toast.LENGTH_SHORT).show();
 							// fill in correct id
 							EditText showIDEditText = (EditText) findViewById(R.id.editTextShowID);
 							showIDEditText.setText(ids[item]);
-
 						}
-					}).show();
+					});
+					try
+					{
+						builder.show();
+					} catch (Exception e)
+					{
+						Log.e(TAG, e.toString());
+					}
 				}
 				// hide progress bar
 				ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
@@ -64,6 +69,11 @@ public class TVShowEditActivity extends Activity
 			}
 		}
 	}
+
+	private static final String TAG = "TVShowCrawler";
+	private int position;
+	private TVShow show;
+	private ShowListBroadcastReceiver showListBroadcastReceiver;
 
 	@Override
 	public void finish()
@@ -119,6 +129,7 @@ public class TVShowEditActivity extends Activity
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_tvshowedit);
+
 		final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
 		progressBar.setVisibility(View.INVISIBLE);
 
@@ -192,10 +203,4 @@ public class TVShowEditActivity extends Activity
 			return;
 		}
 	}
-
-	private ShowListBroadcastReceiver showListBroadcastReceiver;
-
-	private TVShow show;
-	private int position;
-	private static final String TAG = "TVShowCrawler";
 }
