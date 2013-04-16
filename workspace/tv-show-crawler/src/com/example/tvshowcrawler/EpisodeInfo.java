@@ -122,7 +122,7 @@ public class EpisodeInfo implements JSONable
 		}
 		else if (days < 0)
 		{
-			return String.format(Locale.US, "%d days ago", days);
+			return String.format(Locale.US, "%d days ago", -days);
 		}
 		else
 		{
@@ -132,7 +132,7 @@ public class EpisodeInfo implements JSONable
 			}
 			else
 			{
-				return String.format(Locale.US, "%d hours ago", hours);
+				return String.format(Locale.US, "%d hours ago", -hours);
 			}
 		}
 	}
