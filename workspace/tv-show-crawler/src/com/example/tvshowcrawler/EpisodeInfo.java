@@ -104,19 +104,36 @@ public class EpisodeInfo implements JSONable
 
 	public String toString()
 	{
+		return String.format(Locale.US, "S%02dE%02d (%s): %s", season, episode, getRelativeAirTime(), title);
+	}
+
+	public String getRelativeAirTime()
+	{
 		Calendar startDate = new GregorianCalendar();
 		Calendar endDate = airTime;
 
 		long totalMillis = endDate.getTimeInMillis() - startDate.getTimeInMillis();
 		int days = (int) (totalMillis / 1000) / 3600 / 24;
+		int hours = (int) (totalMillis % days * 24 * 3600 * 1000) / 1000 / 3600;
 
-		if (days >= 0)
+		if (days > 0)
 		{
-			return String.format(Locale.US, "S%02dE%02d (in %d days): %s", season, episode, days, title);
+			return String.format(Locale.US, "in %d days", days);
+		}
+		else if (days < 0)
+		{
+			return String.format(Locale.US, "%d days ago", days);
 		}
 		else
 		{
-			return String.format(Locale.US, "S%02dE%02d (%d days ago): %s", season, episode, -days, title);
+			if (hours > 0)
+			{
+				return String.format(Locale.US, "in %d hours", hours);
+			}
+			else
+			{
+				return String.format(Locale.US, "%d hours ago", hours);
+			}
 		}
 	}
 
