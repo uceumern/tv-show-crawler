@@ -54,9 +54,9 @@
             android:layout_width="32dp"
             android:layout_height="wrap_content"
             android:adjustViewBounds="true"
+            android:contentDescription="@string/search_button"
             android:scaleType="fitXY"
             android:src="@drawable/search" />
-
     </LinearLayout>
 
     <TextView
